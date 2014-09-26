@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.media.opengl.GL2;
@@ -161,6 +162,143 @@ public class Terrain {
         Road road = new Road(width, spine);
         myRoads.add(road);        
     }
+    
+    private int getNumOfVertices()
+    {
+    	return (int) (mySize.getWidth() * mySize.getHeight());
+    }
+    
+    /**
+	 * Generate a list of vertices from the terrain data. The numbering scheme 
+	 * will be, number the first row 1 to n, then the next row from n + 1
+	 * @return
+	 */
+	public double[] getVertexList()
+	{
+		double vertexList[] = new double[getNumOfVertices() * 3];
+		int vertexCounter = 0;
+		for (int row = 0; row < mySize.height; row++)
+		{
+			for (int col = 0; col < mySize.width; col++)
+			{
+				vertexList[vertexCounter++] = col;
+				vertexList[vertexCounter++] = getGridAltitude(col, row);
+				vertexList[vertexCounter++] = row;
+			}
+		}
+		
+		return vertexList;
+	}
+	
+	
+	/**
+	 * This generates an array representing the indices of the triangle 
+	 * elements making up the terrain. 
+	 * 
+	 * It works on the following principle:
+	 * The terrain is made up of squares that are split in to two
+	 * triangles as shown 
+	 * 
+	 * 				1		2
+	 * 				.-------.
+	 * 				|		|
+	 * 				.-------.
+	 * 				3		4
+	 * 
+	 * The triangles will be represented by
+	 * 1->3->2
+	 * and
+	 * 2->3->4
+	 * You then move to the right to the next square (i.e. top
+	 * left coordinate will be 2 instead of 1) and do the process again.
+	 * If you end up at the edge of the grid (i.e. index 2 in this example) 
+	 * you move to the next row
+	 */
+	public double[] getTriIndexList()
+	{
+		double width = mySize.getWidth();
+		double height = mySize.getHeight();
+		double numberOfTris = ((width - 1) * (height - 1)) * 2;
+		double[] triIndexList = new double[(int) (numberOfTris * 3)];
+		int indexCounter = 0;
+		
+		/*
+		 * Note that the loop stops at the 2nd last row as that 
+		 * is the last row of triangles that we will create. 
+		 */
+		for (int i = 0; i < (getNumOfVertices() - width); i++)
+		{
+			// Make sure that we are not at the edge of the grid
+			if (i == (width - 1))
+				continue;
+			// First triangle
+			triIndexList[indexCounter++] = i;
+			triIndexList[indexCounter++] = i + width;
+			triIndexList[indexCounter++] = i + 1;
+			// Second Triangle
+			triIndexList[indexCounter++] = i + 1;
+			triIndexList[indexCounter++] = i + width;
+			triIndexList[indexCounter++] = i + width + 1;
+		}
+		
+		return triIndexList;
+	}
+	
+	public double[] getNormalList(double[] triIndexList, double[] vertexList)
+	{
+		double[] normalList = new double[triIndexList.length];
+		int numberOfTriElements = triIndexList.length / 3;
+		int indexCounter = 0;
+		
+		for (int i = 0; i < numberOfTriElements; i++)
+		{
+			int startIndex = i * 3;
+			double[] vector1 = new double[3];
+			double[] vector2 = new double[3];
+
+			int indexOfPoint1 = (int) triIndexList[startIndex];
+			int indexOfPoint2 = (int) triIndexList[startIndex + 1];
+			int indexOfPoint3 = (int) triIndexList[startIndex + 2];
+			double point1[] = Arrays.copyOfRange(vertexList, (indexOfPoint1 * 3), (indexOfPoint1 * 3 + 3));
+			double point2[] = Arrays.copyOfRange(vertexList, (indexOfPoint2 * 3), (indexOfPoint2 * 3 + 3));
+			double point3[] = Arrays.copyOfRange(vertexList, (indexOfPoint3 * 3), (indexOfPoint3 * 3 + 3));
+			//double point2[] = Arrays.copyOfRange(vertexList, (startIndex * 3), (startIndex * 3 + 3));
+			//double point3[] = Arrays.copyOfRange(vertexList, (startIndex + 6), (startIndex + 9));
+			
+			vector1[0] = point2[0] - point1[0];
+			vector1[1] = point2[1] - point1[1];
+			vector1[2] = point2[2] - point1[2];
+			
+			vector2[0] = point3[0] - point1[0];
+			vector2[1] = point3[1] - point1[1];
+			vector2[2] = point3[2] - point1[2];
+			
+			double[] normal = crossProduct(vector1, vector2);
+			for (int j = 0; j < 3; j++)
+				normalList[indexCounter++] = normal[j];
+			
+		}
+		
+		return normalList;
+		
+		
+		
+	}
+	
+	private double[] crossProduct(double[] vector1, double[] vector2)
+	{
+		double[] result = new double[3];
+		result[0] = vector1[1] * vector2[2] - vector1[2] * vector2[1];
+		result[1] = vector1[2] * vector2[0] - vector1[0] * vector2[2];
+		result[2] = vector1[0] * vector2[1] - vector1[1] * vector2[0];
+		
+		// Normalise result
+		double magnitude = Math.sqrt(result[0] * result[0] + result[1] * result[1] + result[2] * result[2]);
+		for (int i = 0; i < 3; i ++)
+			result[i] /= magnitude;
+		
+		return result;
+	}
 
 
 }
