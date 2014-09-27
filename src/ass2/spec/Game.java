@@ -25,12 +25,15 @@ public class Game extends JFrame implements GLEventListener{
 
     private Terrain myTerrain;
     private double[] myVertices;
-    private double[] myNormlas;
-    private double[] myTriIndices;
+    private double[] myNormals;
+    private int[] myTriIndices;
 
     public Game(Terrain terrain) {
     	super("Assignment 2");
         myTerrain = terrain;
+        myVertices = myTerrain.getVertexList();
+        myTriIndices = myTerrain.getTriIndexList();
+        myNormals = myTerrain.getNormalList(myTriIndices, myVertices);
    
     }
     
@@ -62,7 +65,9 @@ public class Game extends JFrame implements GLEventListener{
      * @throws FileNotFoundException
      */
     public static void main(String[] args) throws FileNotFoundException {
-        Terrain terrain = LevelIO.load(new File(args[0]));
+        //Terrain terrain = LevelIO.load(new File(args[0]));
+    	String testFile = "test2.json";
+    	Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
     }
@@ -70,15 +75,43 @@ public class Game extends JFrame implements GLEventListener{
 	@Override
 	public void display(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
-        gl.glColor4f(0f,0f,0f,1f);
+        //gl.glColor4f(0f,0f,0f,1f);
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
         gl.glMatrixMode(GL2.GL_PROJECTION);
         gl.glLoadIdentity();
 
-        GLU glu = new GLU();
-        glu.gluPerspective(60, 1, 1, 10);
         
+        
+        GLU glu = new GLU();
+        //gl.glOrtho(0, 5, -1, 2, -2, 0);
+        glu.gluPerspective(60, 1, 10, -20);
+        
+        //gl.glMatrixMode(GL2.GL_MODELVIEW);
+        //gl.glRotated(-120, 1, 0, 0);
+        float matDiff[] = {0.0f, 1.0f, 0.0f, 1.0f};
+        gl.glMaterialfv(GL2.GL_FRONT_AND_BACK, GL2.GL_AMBIENT_AND_DIFFUSE, matDiff, 0);
+        
+		int numberOfTriElements = myTriIndices.length / 3; // 3 vertices to a tri element
+		gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
+		gl.glBegin(GL2.GL_TRIANGLES);
+		{
+			for (int triCounter = 0; triCounter < numberOfTriElements; triCounter++)
+			{
+				int startIndex = triCounter * 3;
+				gl.glNormal3dv(myNormals, startIndex);
+				int indexOfPoint0 = myTriIndices[startIndex];
+				int indexOfPoint1 = myTriIndices[startIndex + 1];
+				int indexOfPoint2 = myTriIndices[startIndex + 2];
+				gl.glVertex3dv(myVertices, indexOfPoint0 * 3);
+				gl.glVertex3dv(myVertices, indexOfPoint1 * 3);
+				gl.glVertex3dv(myVertices, indexOfPoint2 * 3);
+			}
+			
+		}
+		gl.glEnd();
 		
+		gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
+        
 	}
 	
 	
@@ -104,9 +137,10 @@ public class Game extends JFrame implements GLEventListener{
     	float lightDifAndSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     	float sunDir[] = myTerrain.getSunlight();
     	float lightPos[] = { sunDir[0], sunDir[1], sunDir[2], 0.0f };
-    	//float globAmb[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    	float globAmb[] = { 0.2f, 0.2f, 0.2f, 1.0f };
 
     	// Light properties.
+    	gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, globAmb,0);
     	gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, lightAmb,0);
     	gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, lightDifAndSpec,0);
     	gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, lightDifAndSpec,0);

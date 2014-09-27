@@ -214,12 +214,12 @@ public class Terrain {
 	 * If you end up at the edge of the grid (i.e. index 2 in this example) 
 	 * you move to the next row
 	 */
-	public double[] getTriIndexList()
+	public int[] getTriIndexList()
 	{
-		double width = mySize.getWidth();
-		double height = mySize.getHeight();
+		int width = (int) mySize.getWidth();
+		int height = (int) mySize.getHeight();
 		double numberOfTris = ((width - 1) * (height - 1)) * 2;
-		double[] triIndexList = new double[(int) (numberOfTris * 3)];
+		int[] triIndexList = new int[(int) (numberOfTris * 3)];
 		int indexCounter = 0;
 		
 		/*
@@ -229,7 +229,7 @@ public class Terrain {
 		for (int i = 0; i < (getNumOfVertices() - width); i++)
 		{
 			// Make sure that we are not at the edge of the grid
-			if (i == (width - 1))
+			if ((i % (width)) == (width - 1))
 				continue;
 			// First triangle
 			triIndexList[indexCounter++] = i;
@@ -244,7 +244,7 @@ public class Terrain {
 		return triIndexList;
 	}
 	
-	public double[] getNormalList(double[] triIndexList, double[] vertexList)
+	public double[] getNormalList(int[] triIndexList, double[] vertexList)
 	{
 		double[] normalList = new double[triIndexList.length];
 		int numberOfTriElements = triIndexList.length / 3;
@@ -299,6 +299,7 @@ public class Terrain {
 		
 		return result;
 	}
-
+	
+	
 
 }

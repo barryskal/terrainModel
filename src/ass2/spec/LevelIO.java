@@ -148,25 +148,33 @@ public class LevelIO {
      * @throws IOException 
      */
     public static void main(String[] args) throws IOException {
-    	String testFileName = "test2By2.json";
+    	String testFileName = "test3x3.json";
         Terrain terrain = LevelIO.load(new File(testFileName));
         System.out.println("--VERTEX LIST--");
         double[] vertexList = terrain.getVertexList();
-		printArray(vertexList);
+		printDoubleArray(vertexList);
         System.out.println("--INDEX LIST--");
-        double[] triIndexList = terrain.getTriIndexList();
-		printArray(triIndexList);
+        int[] triIndexList = terrain.getTriIndexList();
+		printIntArray(triIndexList);
         System.out.println("--NORMALS LIST--");
-        printArray(terrain.getNormalList(triIndexList, vertexList));
+        printDoubleArray(terrain.getNormalList(triIndexList, vertexList));
         //LevelIO.save(terrain, new File(args[1]));
         
     }
     
-    private static void printArray(double[] array)
+    private static void printDoubleArray(double[] array)
     {
     	for (int i = 0; i < array.length; i += 3)
     	{
     		System.out.printf("| %.2f  %.2f  %.2f |%n", array[i], array[i + 1], array[i + 2]);
+    	}
+    }
+    
+    private static void printIntArray(int[] array)
+    {
+    	for (int i = 0; i < array.length; i += 3)
+    	{
+    		System.out.printf("| %d  %d  %d |%n", array[i], array[i + 1], array[i + 2]);
     	}
     }
 
