@@ -1,5 +1,7 @@
 package ass2.spec;
 
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 
@@ -21,12 +23,14 @@ import com.jogamp.opengl.util.FPSAnimator;
  *
  * @author malcolmr
  */
-public class Game extends JFrame implements GLEventListener{
+public class Game extends JFrame implements GLEventListener, KeyListener {
 
     private Terrain myTerrain;
     private double[] myVertices;
     private double[] myNormals;
     private int[] myTriIndices;
+    private double[] myTranslation;
+    private double myRotation;
 
     public Game(Terrain terrain) {
     	super("Assignment 2");
@@ -34,6 +38,8 @@ public class Game extends JFrame implements GLEventListener{
         myVertices = myTerrain.getVertexList();
         myTriIndices = myTerrain.getTriIndexList();
         myNormals = myTerrain.getNormalList(myTriIndices, myVertices);
+        myTranslation = myTerrain.getStartingTranslation();
+        myRotation = 0;
    
     }
     
@@ -47,6 +53,8 @@ public class Game extends JFrame implements GLEventListener{
           GLJPanel panel = new GLJPanel();
           panel.addGLEventListener(this);
  
+          panel.addKeyListener(this);;
+          
           // Add an animator to call 'display' at 60fps        
           FPSAnimator animator = new FPSAnimator(60);
           animator.add(panel);
@@ -66,7 +74,7 @@ public class Game extends JFrame implements GLEventListener{
      */
     public static void main(String[] args) throws FileNotFoundException {
         //Terrain terrain = LevelIO.load(new File(args[0]));
-    	String testFile = "test2.json";
+    	String testFile = "test4x4.json";
     	Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
@@ -75,23 +83,19 @@ public class Game extends JFrame implements GLEventListener{
 	@Override
 	public void display(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
-        //gl.glColor4f(0f,0f,0f,1f);
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
-        gl.glMatrixMode(GL2.GL_PROJECTION);
+        
         gl.glLoadIdentity();
-
+        gl.glTranslated(myTranslation[0], myTranslation[1], myTranslation[2]);
         
+        gl.glRotated(myRotation, 0, 1, 0);
         
-        GLU glu = new GLU();
-        //gl.glOrtho(0, 5, -1, 2, -2, 0);
-        glu.gluPerspective(60, 1, 10, -20);
-        
-        //gl.glMatrixMode(GL2.GL_MODELVIEW);
-        //gl.glRotated(-120, 1, 0, 0);
+        gl.glScaled(1, 1, -1);
         float matDiff[] = {0.0f, 1.0f, 0.0f, 1.0f};
         gl.glMaterialfv(GL2.GL_FRONT_AND_BACK, GL2.GL_AMBIENT_AND_DIFFUSE, matDiff, 0);
         
 		int numberOfTriElements = myTriIndices.length / 3; // 3 vertices to a tri element
+		//gl.glPolygonMode(GL2.GL_FRONT, GL2.GL_FILL);
 		gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
 		gl.glBegin(GL2.GL_TRIANGLES);
 		{
@@ -137,10 +141,10 @@ public class Game extends JFrame implements GLEventListener{
     	float lightDifAndSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     	float sunDir[] = myTerrain.getSunlight();
     	float lightPos[] = { sunDir[0], sunDir[1], sunDir[2], 0.0f };
-    	float globAmb[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    	//float globAmb[] = { 0.2f, 0.2f, 0.2f, 1.0f };
 
     	// Light properties.
-    	gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, globAmb,0);
+    	//gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, globAmb,0);
     	gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, lightAmb,0);
     	gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, lightDifAndSpec,0);
     	gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, lightDifAndSpec,0);
@@ -148,9 +152,7 @@ public class Game extends JFrame implements GLEventListener{
 
     	gl.glEnable(GL2.GL_LIGHT0); // Enable particular light source.
     	
-    	gl.glMatrixMode(GL2.GL_MODELVIEW);
-    	gl.glLoadIdentity();
-		
+    			
 	}
 
 	@Override
@@ -164,6 +166,43 @@ public class Game extends JFrame implements GLEventListener{
          glu.gluPerspective(60.0, (float)width/(float)height, 1.0, 50.0);
         
          gl.glMatrixMode(GL2.GL_MODELVIEW);
+		
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		switch (e.getKeyCode()) {
+			case KeyEvent.VK_UP:
+	            myTranslation[2] += 0.1;
+	            System.out.println("distance " + myTranslation[2]);
+	            break;
+	            
+			case KeyEvent.VK_DOWN:
+				myTranslation[2] -= 0.1;
+				System.out.println("distance " + myTranslation[2]);
+				break;
+				
+			case KeyEvent.VK_LEFT:
+				myRotation -= 1;
+				break;
+				
+			case KeyEvent.VK_RIGHT:
+				myRotation += 1;
+				break;
+		
+		}
+		
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
 		
 	}
 }

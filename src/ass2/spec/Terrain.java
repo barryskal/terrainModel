@@ -301,5 +301,15 @@ public class Terrain {
 	}
 	
 	
+	public double[] getStartingTranslation()
+	{
+		double[] translation = new double[3];
+		translation[0] = -1 * (mySize.getWidth() / 2);
+		translation[1] = -0.5;
+		translation[2] = -1 * (mySize.getHeight());
+		
+		return translation;
+	}
+	
 
 }
