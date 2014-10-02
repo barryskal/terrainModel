@@ -31,7 +31,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     private int[] myTriIndices;
     private double[] myTranslation;
     private double myRotation;
-    private static double MOVEMENT_AMOUNT = 1;
+    private static double MOVEMENT_AMOUNT = 0.5;
 	private static double ROTATION_AMOUNT = 5;
 
     public Game(Terrain terrain) {
@@ -215,6 +215,31 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		
 		myTranslation[0] += xMovement;
 		
+		updateAltitudePosition();
+		
+	}
+
+	private void updateAltitudePosition() {
+		// Move to the correct altitude
+		double[] currentMapPosition = getPositionOnMap();
+		System.out.printf("x : %.2f z: %.2f%n", currentMapPosition[0], currentMapPosition[1]);
+		double altitutde = myTerrain.altitude(currentMapPosition[0], currentMapPosition[1]);
+		System.out.println("altitude: " + altitutde);
+		myTranslation[1] = -1 * (altitutde + 0.5);
+	}
+	
+	
+	/**
+	 * Generates a 2 element array containing the current x and z position on 
+	 * the terrain map. This is generated from the camera position
+	 * @return	A array of doubles of size 2.
+	 */
+	private double[] getPositionOnMap()
+	{
+		double[] position = new double[2];
+		position[0] = (myTerrain.size().getWidth() - 1) + myTranslation[0];
+		position[1] = 1 + myTranslation[2];
+		return position;
 	}
 	
 	private void moveForward()
@@ -232,6 +257,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		
 		myTranslation[0] -= xMovement;
 		//System.out.println("x after: " + myTranslation[0]);
+		
+		updateAltitudePosition();
 	}
 	
 	private void rotate(double rotateAmount)

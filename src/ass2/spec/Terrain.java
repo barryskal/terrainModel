@@ -25,7 +25,8 @@ import org.json.JSONTokener;
  */
 public class Terrain {
 
-    private Dimension mySize;
+    public static final int STARTING_Z_DISTANCE = 2;
+	private Dimension mySize;
     private double[][] myAltitude;
     private List<Tree> myTrees;
     private List<Road> myRoads;
@@ -130,12 +131,51 @@ public class Terrain {
      * @param z
      * @return
      */
-    public double altitude(double x, double z) {
-        double altitude = 0;
-
+    public double altitude(double x, double z) 
+    {
         
+    	if (isInvalidLocation(x, z))
+    		return 0;
+    	
+    	int leftX = (int) Math.floor(x);
+    	int rightX = (int) Math.ceil(x);
+    	int nearZ = (int) Math.floor(z);
+    	int farZ = (int) Math.ceil(z);
+    	double bottomY, topY;
+    	
+    	if (leftX == rightX)
+    	{
+    		bottomY = getGridAltitude(leftX, nearZ);
+    		topY = getGridAltitude(leftX, farZ);
+    	}
+    	else
+    	{
+    		double lerpFactor = x - leftX;
+    		double altAtLeftX = getGridAltitude(leftX, nearZ);
+    		double altAtRightX = getGridAltitude(rightX, nearZ);
+    		bottomY = altAtLeftX + lerpFactor * (altAtRightX - altAtLeftX); 
+    		
+    		altAtLeftX = getGridAltitude(leftX, farZ);
+    		altAtRightX = getGridAltitude(rightX, farZ);
+    		topY = altAtLeftX + lerpFactor * (altAtRightX - altAtLeftX);
+    	}
+    	
+    	if ((nearZ == farZ) || (bottomY == topY))
+    	{
+    		return bottomY;
+    	}
+    	else
+    	{
+    		double lerpFactor = z - nearZ;
+    		double altAtZ = bottomY + lerpFactor*(topY - bottomY);
+    		return altAtZ;
+    	}
         
-        return altitude;
+    }
+    
+    private boolean isInvalidLocation(double x, double z)
+    {
+    	return (x < 0) || (z < 0) || (x > mySize.getWidth() - 1) || (z > mySize.getHeight() - 1); 
     }
 
     /**
@@ -206,9 +246,9 @@ public class Terrain {
 	 * 				3		4
 	 * 
 	 * The triangles will be represented by
-	 * 1->3->2
+	 * 1->3->4
 	 * and
-	 * 2->3->4
+	 * 1->4->2
 	 * You then move to the right to the next square (i.e. top
 	 * left coordinate will be 2 instead of 1) and do the process again.
 	 * If you end up at the edge of the grid (i.e. index 2 in this example) 
@@ -234,11 +274,11 @@ public class Terrain {
 			// First triangle
 			triIndexList[indexCounter++] = i;
 			triIndexList[indexCounter++] = i + width;
-			triIndexList[indexCounter++] = i + 1;
-			// Second Triangle
-			triIndexList[indexCounter++] = i + 1;
-			triIndexList[indexCounter++] = i + width;
 			triIndexList[indexCounter++] = i + width + 1;
+			// Second Triangle
+			triIndexList[indexCounter++] = i;
+			triIndexList[indexCounter++] = i + width + 1;
+			triIndexList[indexCounter++] = i + 1;
 		}
 		
 		return triIndexList;
@@ -304,9 +344,10 @@ public class Terrain {
 	public double[] getStartingTranslation()
 	{
 		double[] translation = new double[3];
-		translation[0] = -1 * (mySize.getWidth() / 2);
-		translation[1] = -0.5;
-		translation[2] = -1 * (mySize.getHeight());
+		double halfwayAcross = (mySize.getWidth() - 1) / 2;
+		translation[0] = -1 * halfwayAcross;
+		translation[1] = -1 * altitude(halfwayAcross, 0) - 0.5;
+		translation[2] = -STARTING_Z_DISTANCE;//-1 * (mySize.getHeight());
 		
 		return translation;
 	}
