@@ -31,6 +31,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     private int[] myTriIndices;
     private double[] myTranslation;
     private double myRotation;
+    private static double MOVEMENT_AMOUNT = 1;
+	private static double ROTATION_AMOUNT = 5;
 
     public Game(Terrain terrain) {
     	super("Assignment 2");
@@ -86,9 +88,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
         
         gl.glLoadIdentity();
+        gl.glRotated(myRotation, 0, 1, 0);
         gl.glTranslated(myTranslation[0], myTranslation[1], myTranslation[2]);
         
-        gl.glRotated(myRotation, 0, 1, 0);
         
         gl.glScaled(1, 1, -1);
         float matDiff[] = {0.0f, 1.0f, 0.0f, 1.0f};
@@ -177,28 +179,71 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 
 	@Override
 	public void keyReleased(KeyEvent e) {
+		
+		
 		switch (e.getKeyCode()) {
 			case KeyEvent.VK_UP:
-	            myTranslation[2] += 0.1;
-	            System.out.println("distance " + myTranslation[2]);
+				moveForward();
 	            break;
 	            
 			case KeyEvent.VK_DOWN:
-				myTranslation[2] -= 0.1;
-				System.out.println("distance " + myTranslation[2]);
+				moveBackward();
 				break;
 				
 			case KeyEvent.VK_LEFT:
-				myRotation -= 1;
+				rotate(ROTATION_AMOUNT * -1);
+				System.out.println("rotation: " + myRotation);
 				break;
 				
 			case KeyEvent.VK_RIGHT:
-				myRotation += 1;
+				rotate(ROTATION_AMOUNT);
+				System.out.println("rotation: " + myRotation);
 				break;
 		
 		}
 		
 	}
+
+	private void moveBackward() {
+		// Change the Z translation first
+		double zTranslation = MOVEMENT_AMOUNT * Math.cos(Math.toRadians(myRotation));
+		
+		myTranslation[2] -= zTranslation;
+		
+		// Shift the X value to the left or right depending on the rotation angle
+		double xMovement = MOVEMENT_AMOUNT * Math.sin(Math.toRadians(myRotation));
+		
+		myTranslation[0] += xMovement;
+		
+	}
+	
+	private void moveForward()
+	{
+		// Change the Z translation first
+		
+		double zTranslation = MOVEMENT_AMOUNT * Math.cos(Math.toRadians(myRotation));
+		
+		myTranslation[2] += zTranslation;
+		//System.out.println("x before: " + myTranslation[0]);
+		
+		// Shift the X value to the left or right depending on the rotation angle
+		double xMovement = MOVEMENT_AMOUNT * Math.sin(Math.toRadians(myRotation));
+	
+		
+		myTranslation[0] -= xMovement;
+		//System.out.println("x after: " + myTranslation[0]);
+	}
+	
+	private void rotate(double rotateAmount)
+	{
+		myRotation += rotateAmount;
+		if (myRotation > 180)
+			myRotation = -360 + myRotation;
+		else if (myRotation < -180)
+			myRotation = 360 + myRotation;
+	}
+	
+	
 
 	@Override
 	public void keyTyped(KeyEvent e) {
