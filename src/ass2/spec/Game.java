@@ -33,6 +33,10 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     private double myRotation;
     private static double MOVEMENT_AMOUNT = 0.5;
 	private static double ROTATION_AMOUNT = 5;
+	private final int NUM_TEXTURES = 1;
+	private MyTexture[] myTextures;
+	private String textureFileName1 = "groundTexture.jpg";
+	private String textureExt1 = "jpg";
 
     public Game(Terrain terrain) {
     	super("Assignment 2");
@@ -76,7 +80,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
      */
     public static void main(String[] args) throws FileNotFoundException {
         //Terrain terrain = LevelIO.load(new File(args[0]));
-    	String testFile = "test4x4.json";
+    	String testFile = "test2.json";
     	Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
@@ -90,11 +94,14 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         gl.glLoadIdentity();
         gl.glRotated(myRotation, 0, 1, 0);
         gl.glTranslated(myTranslation[0], myTranslation[1], myTranslation[2]);
-        
-        
         gl.glScaled(1, 1, -1);
-        float matDiff[] = {0.0f, 1.0f, 0.0f, 1.0f};
+
+        float matDiff[] = {1.0f, 1.0f, 1.0f, 1.0f};
         gl.glMaterialfv(GL2.GL_FRONT_AND_BACK, GL2.GL_AMBIENT_AND_DIFFUSE, matDiff, 0);
+        
+        // Set current texture
+        gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[0].getTextureId());
+        
         
 		int numberOfTriElements = myTriIndices.length / 3; // 3 vertices to a tri element
 		//gl.glPolygonMode(GL2.GL_FRONT, GL2.GL_FILL);
@@ -108,8 +115,11 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 				int indexOfPoint0 = myTriIndices[startIndex];
 				int indexOfPoint1 = myTriIndices[startIndex + 1];
 				int indexOfPoint2 = myTriIndices[startIndex + 2];
+				gl.glTexCoord2d(0, 0.0);
 				gl.glVertex3dv(myVertices, indexOfPoint0 * 3);
+				gl.glTexCoord2d(0.5, 1.0);
 				gl.glVertex3dv(myVertices, indexOfPoint1 * 3);
+				gl.glTexCoord2d(1.0, 0.0);
 				gl.glVertex3dv(myVertices, indexOfPoint2 * 3);
 			}
 			
@@ -137,6 +147,18 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 
     	   // Turn on OpenGL lighting.
     	gl.glEnable(GL2.GL_LIGHTING); 
+    	
+    	// Turn on OpenGL texturing.
+    	gl.glEnable(GL2.GL_TEXTURE_2D);
+    	myTextures = new MyTexture[NUM_TEXTURES];
+    	myTextures[0] = new MyTexture(gl,textureFileName1,textureExt1);
+    	
+    	
+    	/*
+    	 * The textures should not interact with the colour of the underlying
+    	 * polygon, so we will set the textures to replace.
+    	 */
+    	gl.glTexEnvf(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE); 
     	
     	// Light property vectors.
     	float lightAmb[] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -237,8 +259,31 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	private double[] getPositionOnMap()
 	{
 		double[] position = new double[2];
-		position[0] = (myTerrain.size().getWidth() - 1) + myTranslation[0];
-		position[1] = 1 + myTranslation[2];
+		/*
+		 * If the horizontal position is off the map, get the position of 
+		 * the closest edge point
+		 */
+		double rightEdge = myTerrain.size().getWidth() - 1;
+		double xPosition = rightEdge + myTranslation[0];
+		if (xPosition < 0)
+			xPosition = 0;
+		else if (xPosition > rightEdge)
+			xPosition = rightEdge;
+			
+		position[0] = xPosition;
+		
+		/*
+		 * Use a similar rule for the bottom and top edges of the map
+		 */
+		
+		double zPosition = 1 + myTranslation[2];
+		double topEdge =  myTerrain.size().getHeight() - 1;
+		if (zPosition < 0)
+			zPosition = 0;
+		else if (zPosition > topEdge)
+			zPosition = topEdge;
+		
+		position[1] = zPosition; 
 		return position;
 	}
 	
