@@ -25,18 +25,23 @@ import com.jogamp.opengl.util.FPSAnimator;
  */
 public class Game extends JFrame implements GLEventListener, KeyListener {
 
-    private Terrain myTerrain;
+    private static final double TREE_HEIGHT = 0.5;
+	private Terrain myTerrain;
     private double[] myVertices;
     private double[] myNormals;
     private int[] myTriIndices;
     private double[] myTranslation;
     private double myRotation;
-    private static double MOVEMENT_AMOUNT = 0.5;
+    private static double MOVEMENT_AMOUNT = 0.1;
 	private static double ROTATION_AMOUNT = 5;
-	private final int NUM_TEXTURES = 1;
+	private final int NUM_TEXTURES = 3;
 	private MyTexture[] myTextures;
-	private String textureFileName1 = "groundTexture.jpg";
-	private String textureExt1 = "jpg";
+	private String groundTexture = "groundTexture.jpg";
+	private String groundTextureExt = "jpg";
+	private String treeTrunkTexture = "treeTrunkTexture.jpg";
+	private String treeTrunkTextureExt = "jpg";
+	private String treeLeafTexture = "treeLeavesTexture.jpg";
+	private String treeLeafTextureExt = "jpg";
 
     public Game(Terrain terrain) {
     	super("Assignment 2");
@@ -80,7 +85,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
      */
     public static void main(String[] args) throws FileNotFoundException {
         //Terrain terrain = LevelIO.load(new File(args[0]));
-    	String testFile = "test2.json";
+    	String testFile = "test4.json";
     	Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
@@ -96,10 +101,18 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         gl.glTranslated(myTranslation[0], myTranslation[1], myTranslation[2]);
         gl.glScaled(1, 1, -1);
 
+        setLighting(gl);
+        
         float matDiff[] = {1.0f, 1.0f, 1.0f, 1.0f};
         gl.glMaterialfv(GL2.GL_FRONT_AND_BACK, GL2.GL_AMBIENT_AND_DIFFUSE, matDiff, 0);
         
-        // Set current texture
+        drawGround(gl);
+        drawTrees(gl);
+        
+	}
+
+	private void drawGround(GL2 gl) {
+		// Set ground texture
         gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[0].getTextureId());
         
         
@@ -127,40 +140,102 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		gl.glEnd();
 		
 		gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
-        
 	}
 	
+	private void drawTrees(GL2 gl)
+	{
+		for (Tree tree : myTerrain.trees())
+			drawTree(gl, tree);
+	}
 	
-
-	@Override
-	public void dispose(GLAutoDrawable drawable) {
-		// TODO Auto-generated method stub
+	private void drawTree(GL2 gl, Tree tree)
+	{
+		// Draw the trunk as a hollow cylinder
+		gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[1].getTextureId());
+		int numberOfTrunkStrips = 16;
+		double theta = 0;
+		double angleIncrement = 2 * Math.PI / numberOfTrunkStrips;
+		double texturePosition = 0;
+		double textureIncrement = (double) 1 / numberOfTrunkStrips;
+		double topOfTree = tree.getPosition()[1] + TREE_HEIGHT;
+		double[] treeBase = tree.getPosition();
+		
+		gl.glPolygonMode(GL2.GL_FRONT, GL2.GL_FILL);
+		gl.glBegin(GL2.GL_QUADS);
+		{
+			for (int i = 0; i < numberOfTrunkStrips; i++)
+			{
+				double[] treePoint1 = 
+					{
+						(treeBase[0] + Tree.TREE_RADIUS * Math.cos(theta + angleIncrement)), 
+						treeBase[1], 
+						(treeBase[2] + Tree.TREE_RADIUS * Math.sin(theta + angleIncrement))
+					};
+				
+				double[] treePoint2 = 
+					{
+						treePoint1[0],
+						topOfTree,
+						treePoint1[2]
+					};
+				
+				
+				double[] treeNormal1 = 
+					{
+						treePoint1[0] - treeBase[0],
+						0,
+						treePoint1[2] - treeBase[2]
+					};
+				
+				gl.glNormal3dv(treeNormal1, 0);
+				gl.glTexCoord2d((texturePosition + textureIncrement), 0.0);
+				//gl.glTexCoord2d(1.0, 0.0);
+				gl.glVertex3dv(treePoint1, 0);
+				gl.glTexCoord2d((texturePosition + textureIncrement), 1.0);
+				//gl.glTexCoord2d(1.0, 1.0);
+				gl.glVertex3dv(treePoint2, 0);
+				
+				double[] treePoint3 = 
+					{
+						(treeBase[0] + Tree.TREE_RADIUS * Math.cos(theta)), 
+						topOfTree, 
+						(treeBase[2] + Tree.TREE_RADIUS * Math.sin(theta))
+					};
+				
+				double[] treePoint4 = 
+					{
+						(treeBase[0] + Tree.TREE_RADIUS * Math.cos(theta)), 
+						treeBase[1], 
+						(treeBase[2] + Tree.TREE_RADIUS * Math.sin(theta))
+					};
+				
+				double[] treeNormal2 = 
+					{
+						treePoint4[0] - treeBase[0],
+						0,
+						treePoint4[2] - treeBase[2]
+					};
+				
+				gl.glNormal3dv(treeNormal2, 0);
+				gl.glTexCoord2d(texturePosition, 1.0);
+				//gl.glTexCoord2d(0.0, 1.0);
+				gl.glVertex3dv(treePoint3, 0);
+				gl.glTexCoord2d(texturePosition, 0.0);
+				//gl.glTexCoord2d(0.0, 0.0);
+				gl.glVertex3dv(treePoint4, 0);
+				
+				theta += angleIncrement;
+				texturePosition += textureIncrement;
+			}
+		}
+		gl.glEnd();
+		gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
 		
 	}
-
-	@Override
-	public void init(GLAutoDrawable drawable) {
-		GL2 gl = drawable.getGL().getGL2();
-    	
-    	gl.glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
-    	gl.glEnable(GL2.GL_DEPTH_TEST); // Enable depth testing.
-
-    	   // Turn on OpenGL lighting.
-    	gl.glEnable(GL2.GL_LIGHTING); 
-    	
-    	// Turn on OpenGL texturing.
-    	gl.glEnable(GL2.GL_TEXTURE_2D);
-    	myTextures = new MyTexture[NUM_TEXTURES];
-    	myTextures[0] = new MyTexture(gl,textureFileName1,textureExt1);
-    	
-    	
-    	/*
-    	 * The textures should not interact with the colour of the underlying
-    	 * polygon, so we will set the textures to replace.
-    	 */
-    	gl.glTexEnvf(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE); 
-    	
-    	// Light property vectors.
+	
+	private void setLighting(GL2 gl)
+	{
+		// Light property vectors.
     	float lightAmb[] = { 0.0f, 0.0f, 0.0f, 1.0f };
     	float lightDifAndSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     	float sunDir[] = myTerrain.getSunlight();
@@ -175,8 +250,48 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     	gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, lightPos,0);
 
     	gl.glEnable(GL2.GL_LIGHT0); // Enable particular light source.
+	}
+
+	
+	@Override
+	public void dispose(GLAutoDrawable drawable) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void init(GLAutoDrawable drawable) {
+		GL2 gl = drawable.getGL().getGL2();
+    	
+    	gl.glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+    	gl.glEnable(GL2.GL_DEPTH_TEST); // Enable depth testing.
+
+    	// Normalise all normals
+    	 gl.glEnable(GL2.GL_NORMALIZE);
+    	
+    	   // Turn on OpenGL lighting.
+    	gl.glEnable(GL2.GL_LIGHTING); 
+    	
+    	// Turn on OpenGL texturing.
+    	gl.glEnable(GL2.GL_TEXTURE_2D);
+    	initialiseTextures(gl);
+    	
+    	
+    	/*
+    	 * The textures should be lit, so we will set the textures to modulate.
+    	 */
+    	gl.glTexEnvf(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE); 
+    	
+    	
     	
     			
+	}
+
+	private void initialiseTextures(GL2 gl) {
+		myTextures = new MyTexture[NUM_TEXTURES];
+    	myTextures[0] = new MyTexture(gl,groundTexture,groundTextureExt);
+    	myTextures[1] = new MyTexture(gl, treeTrunkTexture, treeTrunkTextureExt);
+    	myTextures[2] = new MyTexture(gl, treeLeafTexture, treeLeafTextureExt);
 	}
 
 	@Override
@@ -195,7 +310,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		// TODO Auto-generated method stub
+		keyReleased(e);
 		
 	}
 

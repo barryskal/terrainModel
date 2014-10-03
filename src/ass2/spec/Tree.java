@@ -6,6 +6,9 @@ package ass2.spec;
  * @author malcolmr
  */
 public class Tree {
+	
+	public static double TREE_HEIGHT = 0.25;
+	public static double TREE_RADIUS = 0.05;
 
     private double[] myPos;
     
