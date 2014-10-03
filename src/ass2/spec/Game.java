@@ -359,7 +359,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	private void updateAltitudePosition() {
 		// Move to the correct altitude
 		double[] currentMapPosition = getPositionOnMap();
-		System.out.printf("x : %.2f z: %.2f%n", currentMapPosition[0], currentMapPosition[1]);
+		System.out.printf("Camera Position: x : %.2f z: %.2f%n", myTranslation[0], myTranslation[2]);
+		System.out.printf("Map Position: x : %.2f z: %.2f%n", currentMapPosition[0], currentMapPosition[1]);
 		double altitutde = myTerrain.altitude(currentMapPosition[0], currentMapPosition[1]);
 		System.out.println("altitude: " + altitutde);
 		myTranslation[1] = -1 * (altitutde + 0.5);
@@ -379,7 +380,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		 * the closest edge point
 		 */
 		double rightEdge = myTerrain.size().getWidth() - 1;
-		double xPosition = rightEdge + myTranslation[0];
+		double xPosition = -1 * myTranslation[0];
 		if (xPosition < 0)
 			xPosition = 0;
 		else if (xPosition > rightEdge)
