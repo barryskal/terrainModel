@@ -12,6 +12,7 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLJPanel;
 import javax.media.opengl.glu.GLU;
+import javax.media.opengl.glu.GLUquadric;
 import javax.swing.JFrame;
 
 import com.jogamp.opengl.util.FPSAnimator;
@@ -144,12 +145,37 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	
 	private void drawTrees(GL2 gl)
 	{
+		
 		for (Tree tree : myTerrain.trees())
+		{
 			drawTree(gl, tree);
+		}
+		
 	}
 	
 	private void drawTree(GL2 gl, Tree tree)
 	{
+		drawTrunk(gl, tree);
+		gl.glPushMatrix();
+		double[] leavesPosition = tree.getCentreOfLeaves();
+		gl.glTranslated(leavesPosition[0], leavesPosition[1], leavesPosition[2]);
+		gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[2].getTextureId());
+		drawLeaves();
+		gl.glPopMatrix();
+	}
+	
+	
+	private void drawLeaves()
+	{
+		
+		GLU glu = new GLU();
+        GLUquadric quadric = glu.gluNewQuadric();
+        glu.gluQuadricTexture(quadric, true);
+        glu.gluQuadricNormals(quadric, GLU.GLU_SMOOTH);
+        glu.gluSphere(quadric, Tree.LEAVES_RADIUS, 32, 32);
+	}
+
+	private void drawTrunk(GL2 gl, Tree tree) {
 		// Draw the trunk as a hollow cylinder
 		gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[1].getTextureId());
 		int numberOfTrunkStrips = 16;
@@ -171,6 +197,13 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 						treeBase[1], 
 						(treeBase[2] + Tree.TREE_RADIUS * Math.sin(theta + angleIncrement))
 					};
+				
+				/*
+				 * Adjust the height altitude of the base using the just calculated
+				 * x and z coordintaes.
+				 */
+				
+				treePoint1[1] = myTerrain.altitude(treePoint1[0], treePoint1[2]);
 				
 				double[] treePoint2 = 
 					{
@@ -209,6 +242,13 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 						(treeBase[2] + Tree.TREE_RADIUS * Math.sin(theta))
 					};
 				
+				/*
+				 * Adjust the height altitude of the base using the just calculated
+				 * x and z coordintaes.
+				 */
+				
+				treePoint4[1] = myTerrain.altitude(treePoint4[0], treePoint4[2]);
+				
 				double[] treeNormal2 = 
 					{
 						treePoint4[0] - treeBase[0],
@@ -230,7 +270,6 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		}
 		gl.glEnd();
 		gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
-		
 	}
 	
 	private void setLighting(GL2 gl)
@@ -392,7 +431,13 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		 * Use a similar rule for the bottom and top edges of the map
 		 */
 		
-		double zPosition = 1 + myTranslation[2];
+		double zPosition;
+		if (Math.abs(myRotation) < 90)
+			zPosition = 1 + myTranslation[2];
+		else
+			zPosition = myTranslation[2] - 1;
+		
+		
 		double topEdge =  myTerrain.size().getHeight() - 1;
 		if (zPosition < 0)
 			zPosition = 0;
