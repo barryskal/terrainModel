@@ -101,7 +101,7 @@ public class Road {
      * @return
      */
     public double[] point(double t) {
-        int i = (int)Math.floor(t);
+        int i = (int) Math.floor(t);
         t = t - i;
         
         i *= 6;
@@ -150,8 +150,31 @@ public class Road {
         // this should never happen
         throw new IllegalArgumentException("" + i);
     }
-
-    public double[] getNormalVectorAtPoint(double t, double[] surfaceNormal)
+    
+    /**
+     * Generates a point along the spine of the road at position t
+     * and at the correct altitude if the road is projected on to
+     * a given terrain
+     * @param t		The point along the spine at which the point is 
+     * generated. Can be a value between 0 and size()
+     * @param terrain	The terrain map on to which the road is being
+     * projected. 
+     * @return	A 3 element double array representing the x, y and z 
+     * coordinates of the generated point. 
+     */
+    public double[] getPointOnTerrain(double t, Terrain terrain)
+    {
+    	double[] roadPoint = point(t);
+    	double[] point = 
+    		{
+    			roadPoint[0],
+    			terrain.altitude(roadPoint[0], roadPoint[2]),
+    			roadPoint[2]
+    		};
+    	return point;
+    }
+    
+    public double[] getNormalVectorAtPoint(double t, Terrain terrain)
     {
     	double[] tangentVector = getTangentVector(t, PIECE_HEIGHT);
     	
@@ -178,20 +201,7 @@ public class Road {
     }
     		
     
-    private double[] crossProduct(double[] a, double[] b)
-    {
-    	double[] c = new double[3];
-    	c[0] = a[1] * b[2] - b[1] * a[2];
-    	c[1] = a[2] * b[0] - b[2] * a[0];
-    	c[2] = a[0] * b[1] - b[0] * a[1];
-    	
-    	// Normalise the new vector
-    	double magnitude = Math.sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-    	for (int i = 0; i < 3; i++)
-    		c[i] /= magnitude;
-    	
-    	return c;
-    }
+    
     
     /**
      * Draws the road as a series of QUAD elements as shown below
@@ -210,7 +220,7 @@ public class Road {
      * examining. 
      * @param gl	The GL2 object being used for this scene
      */
-    public void draw(GL2 gl)
+    public void draw(GL2 gl, Terrain terrain)
     {
     	double[] tempSurfaceNormal = {0, 1, 0};
     	gl.glPolygonMode(GL2.GL_FRONT, GL2.GL_FILL);
@@ -218,7 +228,7 @@ public class Road {
 		{
 			for (double t = 0; t < size(); t += PIECE_HEIGHT)
 			{
-				double[] currentPoint = point(t);
+				double[] currentPoint = getPointOnTerrain(t, terrain);
 				double[] normalAtCurrentPoint = getNormalVectorAtPoint(t, tempSurfaceNormal);
 				double[] point0 = 
 					{

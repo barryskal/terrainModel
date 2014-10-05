@@ -313,7 +313,7 @@ public class Terrain {
 			vector2[1] = point3[1] - point1[1];
 			vector2[2] = point3[2] - point1[2];
 			
-			double[] normal = crossProduct(vector1, vector2);
+			double[] normal = MathUtil.crossProduct(vector1, vector2);
 			for (int j = 0; j < 3; j++)
 				normalList[indexCounter++] = normal[j];
 			
@@ -321,23 +321,52 @@ public class Terrain {
 		
 		return normalList;
 		
-		
-		
 	}
 	
-	private double[] crossProduct(double[] vector1, double[] vector2)
+	
+	public double[] getNormalAtPoint(double x, double z)
 	{
-		double[] result = new double[3];
-		result[0] = vector1[1] * vector2[2] - vector1[2] * vector2[1];
-		result[1] = vector1[2] * vector2[0] - vector1[0] * vector2[2];
-		result[2] = vector1[0] * vector2[1] - vector1[1] * vector2[0];
+		double y = altitude(x, z);
+		double x0 = Math.floor(x);
+		double z0 = Math.floor(z);
+		double z1 = Math.ceil(z);
 		
-		// Normalise result
-		double magnitude = Math.sqrt(result[0] * result[0] + result[1] * result[1] + result[2] * result[2]);
-		for (int i = 0; i < 3; i ++)
-			result[i] /= magnitude;
+		if (z0 == (mySize.getHeight() - 1))
+		{
+			z1 = z0 - 1; 
+		}
+		else if (z0 == z1)
+		{
+			z1 = z0 + 1;
+		}
 		
-		return result;
+		double[] vector1 = 
+			{
+				x0 - x,
+				myAltitude[(int) x0][(int) z0] - y,
+				z0 - z
+			};
+		
+		if (MathUtil.magnitude(vector1) == 0)
+		{
+			vector1[0] = -1;
+			vector1[1] = myAltitude[(int) x0][(int) z0] - myAltitude[(int) (x0 + 1)][(int) z0];
+			vector1[2] = 0;
+		}
+		
+		
+		double[] vector2 =
+			{
+				x0 - x,
+				myAltitude[(int) x0][(int) z1] - y,
+				z1 - z
+			};
+		
+		System.out.printf("Vector 1: %.2f, %.2f, %.2f%n", vector1[0], vector1[1], vector1[2]);
+		System.out.printf("Vector 2: %.2f, %.2f, %.2f%n", vector2[0], vector2[1], vector2[2]);
+		double[] normalVector = MathUtil.crossProduct(vector1, vector2);
+		return normalVector;
+		
 	}
 	
 	

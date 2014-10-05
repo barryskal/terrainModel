@@ -116,8 +116,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	private void drawRoads(GL2 gl)
 	{
 		gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[3].getTextureId());
-		for (Road road : myTerrain.roads())
-			road.draw(gl);
+		/*for (Road road : myTerrain.roads())
+			road.draw(gl);*/
 	}
 	
 	private void drawGround(GL2 gl) {

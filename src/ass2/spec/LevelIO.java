@@ -148,7 +148,7 @@ public class LevelIO {
      * @throws IOException 
      */
     public static void main(String[] args) throws IOException {
-    	String testFileName = "test7.json";
+    	String testFileName = "test3x3.json";
         Terrain terrain = LevelIO.load(new File(testFileName));
         System.out.println("--VERTEX LIST--");
         double[] vertexList = terrain.getVertexList();
@@ -158,13 +158,16 @@ public class LevelIO {
 		printIntArray(triIndexList);
         System.out.println("--NORMALS LIST--");
         printDoubleArray(terrain.getNormalList(triIndexList, vertexList));
-        Road road = terrain.roads().get(0);
+        System.out.println("--NORMAL--");
+        printDoubleArray(terrain.getNormalAtPoint(0, 1.5));
+        
+        /*Road road = terrain.roads().get(0);
 		System.out.println("Size: " + road.size());
 		 
         double[] point0 = road.point(0);
 		System.out.printf("x: %.2f,  z: %.2f%n", point0[0], point0[1]);
         double[] point1 = road.point(0.25);
-        System.out.printf("x: %.2f,  z: %.2f%n", point1[0], point1[1]);
+        System.out.printf("x: %.2f,  z: %.2f%n", point1[0], point1[1]);*/
         //LevelIO.save(terrain, new File(args[1]));
         
     }
