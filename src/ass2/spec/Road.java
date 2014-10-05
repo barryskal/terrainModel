@@ -3,6 +3,8 @@ package ass2.spec;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.media.opengl.GL2;
+
 /**
  * COMMENT: Comment Road 
  *
@@ -10,8 +12,11 @@ import java.util.List;
  */
 public class Road {
 
-    private List<Double> myPoints;
+    private static final double PIECE_HEIGHT = 0.1;
+	private List<Double> myPoints;
     private double myWidth;
+    public static String TEXTURE_FILE = "roadTexture.jpg";
+    public static String TEXTURE_EXTENSION = "jpg";
     
     /** 
      * Create a new road starting at the specified point
@@ -146,5 +151,124 @@ public class Road {
         throw new IllegalArgumentException("" + i);
     }
 
-
+    public double[] getNormalVectorAtPoint(double t, double[] surfaceNormal)
+    {
+    	double[] tangentVector = getTangentVector(t, PIECE_HEIGHT);
+    	
+    	return crossProduct(surfaceNormal, tangentVector);
+    }
+    
+    private double[] getTangentVector(double t, double offset)
+    {
+    	double[] pointBefore;
+    	if (t == 0)
+    		pointBefore = point(t);
+    	else
+    		pointBefore = point(t - offset);
+    	
+    	double[] pointAfter = point(t + offset);
+    	double[] tangentVector = 
+    		{
+    			pointAfter[0] - pointBefore[0],
+    			pointAfter[1] - pointBefore[1],
+    			pointAfter[2] - pointBefore[2]
+    		};
+    	
+    	return tangentVector;
+    }
+    		
+    
+    private double[] crossProduct(double[] a, double[] b)
+    {
+    	double[] c = new double[3];
+    	c[0] = a[1] * b[2] - b[1] * a[2];
+    	c[1] = a[2] * b[0] - b[2] * a[0];
+    	c[2] = a[0] * b[1] - b[0] * a[1];
+    	
+    	// Normalise the new vector
+    	double magnitude = Math.sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+    	for (int i = 0; i < 3; i++)
+    		c[i] /= magnitude;
+    	
+    	return c;
+    }
+    
+    /**
+     * Draws the road as a series of QUAD elements as shown below
+     * 		0    3 4   7
+     * 		 ----  ----
+     * 		|	 ||	   |
+     * 		|	 ||	   |   ----> Road Direction
+     * 		 ----  ----
+     * 		1    2 5   6
+     * 
+     * The width of the quads is the width provided in the json file.
+     * The height of the quads is defined by the constant PIECE_HEIGHT
+     * Note that the height may actually change due to the curvature of 
+     * the road. To account for this, we determine the normal vector
+     * to the spine at the point along the road we are currently 
+     * examining. 
+     * @param gl	The GL2 object being used for this scene
+     */
+    public void draw(GL2 gl)
+    {
+    	double[] tempSurfaceNormal = {0, 1, 0};
+    	gl.glPolygonMode(GL2.GL_FRONT, GL2.GL_FILL);
+		gl.glBegin(GL2.GL_QUADS);
+		{
+			for (double t = 0; t < size(); t += PIECE_HEIGHT)
+			{
+				double[] currentPoint = point(t);
+				double[] normalAtCurrentPoint = getNormalVectorAtPoint(t, tempSurfaceNormal);
+				double[] point0 = 
+					{
+						currentPoint[0] + normalAtCurrentPoint[0] * myWidth,
+						currentPoint[1] + normalAtCurrentPoint[1] * myWidth,
+						currentPoint[2] + normalAtCurrentPoint[2] * myWidth
+					};
+				
+				gl.glNormal3dv(tempSurfaceNormal, 0);
+				gl.glTexCoord2d(0.0, 1.0);
+				gl.glVertex3dv(point0, 0);
+				
+				double[] point1 = 
+					{
+						currentPoint[0] - normalAtCurrentPoint[0] * myWidth,
+						currentPoint[1] - normalAtCurrentPoint[1] * myWidth,
+						currentPoint[2] - normalAtCurrentPoint[2] * myWidth
+					};
+				
+				gl.glNormal3dv(tempSurfaceNormal, 0);
+				gl.glTexCoord2d(0.0, 0.0);
+				gl.glVertex3dv(point1, 0);
+				
+				double[] nextPoint = point(t + PIECE_HEIGHT);
+				double[] normalAtNextPoint = getNormalVectorAtPoint(t + PIECE_HEIGHT, tempSurfaceNormal);
+				double[] point2 = 
+					{
+						nextPoint[0] - normalAtNextPoint[0] * myWidth,
+						nextPoint[1] - normalAtNextPoint[1] * myWidth,
+						nextPoint[2] - normalAtNextPoint[2] * myWidth
+					};
+				
+				gl.glNormal3dv(tempSurfaceNormal, 0);
+				gl.glTexCoord2d(1.0, 0.0);
+				gl.glVertex3dv(point2, 0);
+				
+				double[] point3 = 
+					{
+						nextPoint[0] + normalAtNextPoint[0] * myWidth,
+						nextPoint[1] + normalAtNextPoint[1] * myWidth,
+						nextPoint[2] + normalAtNextPoint[2] * myWidth
+					};
+				
+				gl.glNormal3dv(tempSurfaceNormal, 0);
+				gl.glTexCoord2d(1.0, 1.0);
+				gl.glVertex3dv(point3, 0);
+			}
+		}
+		gl.glEnd();
+		
+		gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
+    }
 }

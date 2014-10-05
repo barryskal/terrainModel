@@ -35,7 +35,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     private double myRotation;
     private static double MOVEMENT_AMOUNT = 0.1;
 	private static double ROTATION_AMOUNT = 5;
-	private final int NUM_TEXTURES = 3;
+	private final int NUM_TEXTURES = 4;
 	private MyTexture[] myTextures;
 	private String groundTexture = "groundTexture.jpg";
 	private String groundTextureExt = "jpg";
@@ -70,7 +70,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
           // Add an animator to call 'display' at 60fps        
           FPSAnimator animator = new FPSAnimator(60);
           animator.add(panel);
-          animator.start();
+          //animator.start();
 
           getContentPane().add(panel);
           setSize(800, 600);        
@@ -86,7 +86,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
      */
     public static void main(String[] args) throws FileNotFoundException {
         //Terrain terrain = LevelIO.load(new File(args[0]));
-    	String testFile = "test4.json";
+    	String testFile = "test5.json";
     	Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
@@ -109,9 +109,17 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         
         drawGround(gl);
         drawTrees(gl);
+        drawRoads(gl);
         
 	}
 
+	private void drawRoads(GL2 gl)
+	{
+		gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[3].getTextureId());
+		for (Road road : myTerrain.roads())
+			road.draw(gl);
+	}
+	
 	private void drawGround(GL2 gl) {
 		// Set ground texture
         gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[0].getTextureId());
@@ -331,6 +339,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     	myTextures[0] = new MyTexture(gl,groundTexture,groundTextureExt);
     	myTextures[1] = new MyTexture(gl, treeTrunkTexture, treeTrunkTextureExt);
     	myTextures[2] = new MyTexture(gl, treeLeafTexture, treeLeafTextureExt);
+    	myTextures[3] = new MyTexture(gl, Road.TEXTURE_FILE, Road.TEXTURE_EXTENSION);
 	}
 
 	@Override
