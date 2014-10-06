@@ -12,7 +12,7 @@ import javax.media.opengl.GL2;
  */
 public class Road {
 
-    private static final double PIECE_HEIGHT = 0.1;
+    private static final double PIECE_HEIGHT = 0.01;
 	private List<Double> myPoints;
     private double myWidth;
     public static String TEXTURE_FILE = "roadTexture.jpg";
@@ -194,7 +194,7 @@ public class Road {
     	
     	
     	double[] pointAfter;
-    	if ((t - 1) < EPSILON)
+    	if ((t - size()) < EPSILON)
     		pointAfter = getPointOnTerrain(t, terrain);
     	else 
     		pointAfter = getPointOnTerrain(t + offset, terrain);
@@ -232,32 +232,44 @@ public class Road {
     public void draw(GL2 gl, Terrain terrain)
     {
     	double[] tempSurfaceNormal = {0, 1, 0};
+    	int numQuads = (int) (size() / PIECE_HEIGHT) - 1; 
     	gl.glPolygonMode(GL2.GL_FRONT, GL2.GL_FILL);
 		gl.glBegin(GL2.GL_QUADS);
 		{
-			for (double t = 0; (t - size()) < (-1 * EPSILON); t += PIECE_HEIGHT)
+			for (double quadNum = 0; quadNum < numQuads; quadNum++)
 			{
+				double t = quadNum * PIECE_HEIGHT;
 				double[] currentPoint = getPointOnTerrain(t, terrain);
 				double[] normalAtCurrentPoint = getNormalVectorAtPoint(t, terrain);
 				double[] point0 = 
 					{
 						currentPoint[0] + normalAtCurrentPoint[0] * (myWidth / 2),
-						currentPoint[1] + normalAtCurrentPoint[1] * (myWidth / 2),
+						0,
 						currentPoint[2] + normalAtCurrentPoint[2] * (myWidth / 2)
 					};
 				
-				gl.glNormal3dv(tempSurfaceNormal, 0);
+				point0[1] = terrain.altitude(point0[0], point0[2]);
+				double[] normalAtPoint0 = terrain.getNormalAtPoint(point0[0], point0[2]);
+				
+				offsetPointFromSurface(point0, normalAtPoint0);
+				
+				gl.glNormal3dv(normalAtPoint0, 0);
 				gl.glTexCoord2d(0.0, 1.0);
 				gl.glVertex3dv(point0, 0);
 				
 				double[] point1 = 
 					{
 						currentPoint[0] - normalAtCurrentPoint[0] * (myWidth / 2),
-						currentPoint[1] - normalAtCurrentPoint[1] * (myWidth / 2),
+						0,
 						currentPoint[2] - normalAtCurrentPoint[2] * (myWidth / 2)
 					};
 				
-				gl.glNormal3dv(tempSurfaceNormal, 0);
+				point1[1] = terrain.altitude(point1[0], point1[2]);
+				double[] normalAtPoint1 = terrain.getNormalAtPoint(point1[0], point1[2]);
+				
+				offsetPointFromSurface(point1, normalAtPoint1); 
+				
+				gl.glNormal3dv(normalAtPoint1, 0);
 				gl.glTexCoord2d(0.0, 0.0);
 				gl.glVertex3dv(point1, 0);
 				
@@ -267,22 +279,32 @@ public class Road {
 				double[] point2 = 
 					{
 						nextPoint[0] - normalAtNextPoint[0] * (myWidth / 2),
-						nextPoint[1] - normalAtNextPoint[1] * (myWidth / 2),
+						0,
 						nextPoint[2] - normalAtNextPoint[2] * (myWidth / 2)
 					};
 				
-				gl.glNormal3dv(tempSurfaceNormal, 0);
+				point2[1] = terrain.altitude(point2[0], point2[2]);
+				double[] normalAtPoint2 = terrain.getNormalAtPoint(point2[0], point2[2]);
+				
+				offsetPointFromSurface(point2, normalAtPoint2);
+				
+				gl.glNormal3dv(normalAtPoint2, 0);
 				gl.glTexCoord2d(1.0, 0.0);
 				gl.glVertex3dv(point2, 0);
 				
 				double[] point3 = 
 					{
 						nextPoint[0] + normalAtNextPoint[0] * (myWidth / 2),
-						nextPoint[1] + normalAtNextPoint[1] * (myWidth / 2),
+						0,
 						nextPoint[2] + normalAtNextPoint[2] * (myWidth / 2)
 					};
 				
-				gl.glNormal3dv(tempSurfaceNormal, 0);
+				point3[1] = terrain.altitude(point3[0], point3[2]);
+				
+				double[] normalAtPoint3 = terrain.getNormalAtPoint(point3[0], point3[2]);
+				offsetPointFromSurface(point3, normalAtPoint3);
+				
+				gl.glNormal3dv(normalAtPoint3, 0);
 				gl.glTexCoord2d(1.0, 1.0);
 				gl.glVertex3dv(point3, 0);
 			}
@@ -291,4 +313,19 @@ public class Road {
 		
 		gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
     }
+
+    /**
+     * This offsets the point a slight amount from the surface using 
+     * the given normal vector.
+     * @param point		The point you want to offset
+     * @param normalAtPoint	The normal to use to offset
+     */
+	private void offsetPointFromSurface(double[] point, double[] normalAtPoint) 
+	{
+		double offsetAmount = 0.01;
+		
+		for (int i = 0; i < 3; i++) {
+			point[i] = point[i] + normalAtPoint[i] * offsetAmount;
+		}
+	}
 }
