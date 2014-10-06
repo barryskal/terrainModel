@@ -70,7 +70,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
           // Add an animator to call 'display' at 60fps        
           FPSAnimator animator = new FPSAnimator(60);
           animator.add(panel);
-          //animator.start();
+          animator.start();
 
           getContentPane().add(panel);
           setSize(800, 600);        
@@ -86,7 +86,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
      */
     public static void main(String[] args) throws FileNotFoundException {
         //Terrain terrain = LevelIO.load(new File(args[0]));
-    	String testFile = "test5.json";
+    	String testFile = "test7.json";
     	Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
@@ -109,6 +109,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         
         drawGround(gl);
         drawTrees(gl);
+        gl.glTranslated(0, 0.0001, 0);
         drawRoads(gl);
         
 	}
@@ -116,8 +117,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	private void drawRoads(GL2 gl)
 	{
 		gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[3].getTextureId());
-		/*for (Road road : myTerrain.roads())
-			road.draw(gl);*/
+		for (Road road : myTerrain.roads())
+			road.draw(gl, myTerrain);
 	}
 	
 	private void drawGround(GL2 gl) {

@@ -17,6 +17,7 @@ public class Road {
     private double myWidth;
     public static String TEXTURE_FILE = "roadTexture.jpg";
     public static String TEXTURE_EXTENSION = "jpg";
+    private static final double EPSILON = 0.001;
     
     /** 
      * Create a new road starting at the specified point
@@ -168,28 +169,36 @@ public class Road {
     	double[] point = 
     		{
     			roadPoint[0],
-    			terrain.altitude(roadPoint[0], roadPoint[2]),
-    			roadPoint[2]
+    			terrain.altitude(roadPoint[0], roadPoint[1]),
+    			roadPoint[1]
     		};
     	return point;
     }
     
-    public double[] getNormalVectorAtPoint(double t, Terrain terrain)
+    private double[] getNormalVectorAtPoint(double t, Terrain terrain)
     {
-    	double[] tangentVector = getTangentVector(t, PIECE_HEIGHT);
     	
-    	return crossProduct(surfaceNormal, tangentVector);
+    	double[] tangentVector = getTangentVector(t, PIECE_HEIGHT, terrain);
+    	double[] point = getPointOnTerrain(t, terrain);
+    	
+    	return MathUtil.crossProduct(terrain.getNormalAtPoint(point[0], point[2]), tangentVector);
     }
     
-    private double[] getTangentVector(double t, double offset)
+    private double[] getTangentVector(double t, double offset, Terrain terrain)
     {
     	double[] pointBefore;
     	if (t == 0)
-    		pointBefore = point(t);
+    		pointBefore = getPointOnTerrain(t, terrain);
     	else
-    		pointBefore = point(t - offset);
+    		pointBefore = getPointOnTerrain(t - offset, terrain);
     	
-    	double[] pointAfter = point(t + offset);
+    	
+    	double[] pointAfter;
+    	if ((t - 1) < EPSILON)
+    		pointAfter = getPointOnTerrain(t, terrain);
+    	else 
+    		pointAfter = getPointOnTerrain(t + offset, terrain);
+    	
     	double[] tangentVector = 
     		{
     			pointAfter[0] - pointBefore[0],
@@ -226,15 +235,15 @@ public class Road {
     	gl.glPolygonMode(GL2.GL_FRONT, GL2.GL_FILL);
 		gl.glBegin(GL2.GL_QUADS);
 		{
-			for (double t = 0; t < size(); t += PIECE_HEIGHT)
+			for (double t = 0; (t - size()) < (-1 * EPSILON); t += PIECE_HEIGHT)
 			{
 				double[] currentPoint = getPointOnTerrain(t, terrain);
-				double[] normalAtCurrentPoint = getNormalVectorAtPoint(t, tempSurfaceNormal);
+				double[] normalAtCurrentPoint = getNormalVectorAtPoint(t, terrain);
 				double[] point0 = 
 					{
-						currentPoint[0] + normalAtCurrentPoint[0] * myWidth,
-						currentPoint[1] + normalAtCurrentPoint[1] * myWidth,
-						currentPoint[2] + normalAtCurrentPoint[2] * myWidth
+						currentPoint[0] + normalAtCurrentPoint[0] * (myWidth / 2),
+						currentPoint[1] + normalAtCurrentPoint[1] * (myWidth / 2),
+						currentPoint[2] + normalAtCurrentPoint[2] * (myWidth / 2)
 					};
 				
 				gl.glNormal3dv(tempSurfaceNormal, 0);
@@ -243,22 +252,23 @@ public class Road {
 				
 				double[] point1 = 
 					{
-						currentPoint[0] - normalAtCurrentPoint[0] * myWidth,
-						currentPoint[1] - normalAtCurrentPoint[1] * myWidth,
-						currentPoint[2] - normalAtCurrentPoint[2] * myWidth
+						currentPoint[0] - normalAtCurrentPoint[0] * (myWidth / 2),
+						currentPoint[1] - normalAtCurrentPoint[1] * (myWidth / 2),
+						currentPoint[2] - normalAtCurrentPoint[2] * (myWidth / 2)
 					};
 				
 				gl.glNormal3dv(tempSurfaceNormal, 0);
 				gl.glTexCoord2d(0.0, 0.0);
 				gl.glVertex3dv(point1, 0);
 				
-				double[] nextPoint = point(t + PIECE_HEIGHT);
-				double[] normalAtNextPoint = getNormalVectorAtPoint(t + PIECE_HEIGHT, tempSurfaceNormal);
+				//System.out.println("t: " + t);
+				double[] nextPoint = getPointOnTerrain(t + PIECE_HEIGHT, terrain);
+				double[] normalAtNextPoint = getNormalVectorAtPoint(t + PIECE_HEIGHT, terrain);
 				double[] point2 = 
 					{
-						nextPoint[0] - normalAtNextPoint[0] * myWidth,
-						nextPoint[1] - normalAtNextPoint[1] * myWidth,
-						nextPoint[2] - normalAtNextPoint[2] * myWidth
+						nextPoint[0] - normalAtNextPoint[0] * (myWidth / 2),
+						nextPoint[1] - normalAtNextPoint[1] * (myWidth / 2),
+						nextPoint[2] - normalAtNextPoint[2] * (myWidth / 2)
 					};
 				
 				gl.glNormal3dv(tempSurfaceNormal, 0);
@@ -267,9 +277,9 @@ public class Road {
 				
 				double[] point3 = 
 					{
-						nextPoint[0] + normalAtNextPoint[0] * myWidth,
-						nextPoint[1] + normalAtNextPoint[1] * myWidth,
-						nextPoint[2] + normalAtNextPoint[2] * myWidth
+						nextPoint[0] + normalAtNextPoint[0] * (myWidth / 2),
+						nextPoint[1] + normalAtNextPoint[1] * (myWidth / 2),
+						nextPoint[2] + normalAtNextPoint[2] * (myWidth / 2)
 					};
 				
 				gl.glNormal3dv(tempSurfaceNormal, 0);

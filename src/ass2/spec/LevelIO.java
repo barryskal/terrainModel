@@ -159,7 +159,7 @@ public class LevelIO {
         System.out.println("--NORMALS LIST--");
         printDoubleArray(terrain.getNormalList(triIndexList, vertexList));
         System.out.println("--NORMAL--");
-        printDoubleArray(terrain.getNormalAtPoint(0, 1.5));
+        printDoubleArray(terrain.getNormalAtPoint(1.1, 2));
         
         /*Road road = terrain.roads().get(0);
 		System.out.println("Size: " + road.size());

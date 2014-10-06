@@ -31,6 +31,8 @@ public class Terrain {
     private List<Tree> myTrees;
     private List<Road> myRoads;
     private float[] mySunlight;
+    private double[] myNormalList;
+    private double[] myVertexList;
 
     /**
      * Create a new terrain
@@ -227,6 +229,7 @@ public class Terrain {
 			}
 		}
 		
+		myVertexList = vertexList;
 		return vertexList;
 	}
 	
@@ -319,53 +322,131 @@ public class Terrain {
 			
 		}
 		
+		myNormalList = normalList;
+		
 		return normalList;
 		
 	}
 	
 	
+		
+	private int getTriangleNum(double x, double z) throws SharedTriangleException
+	{
+		/* 
+		 * Find out whether it belongs to the top triangle
+		 * or the bottom triangle by measuring the distance 
+		 * between points 2 and 3 to the point respectively. 
+		 * If the vector from 2 to P has a lower distance, then
+		 * the point is in the upper triangle.
+		 * Vice-versa with a lower distance to point 3.
+		 * You take the normal vector from whatever triangle 
+		 * the point belongs to. 
+		 * If the point is in between points 2 and 3. Then it
+		 * must be extacly between the triangles. In this case, 
+		 * take the average of the two normal vectors.
+		 */
+		
+		int point2X = (int) Math.ceil(x);
+		if (point2X == (int) x)
+		{
+			// Move right if on the left edge
+			if (point2X == 0)
+				point2X = 1;
+		}
+		
+		int point2Z = (int) Math.floor(z);
+		if (point2Z == (int) z)
+		{
+			// Stay away from the bottom edge
+			if (point2Z == (mySize.getHeight() - 1))
+				point2Z -= 1;
+		}
+		
+		
+		int point3X = point2X - 1;
+		int point3Z = point2Z + 1;
+		/*System.out.printf("point2 x: %d,  z: %d%n", point2X, point2Z);
+		System.out.printf("point3 x: %d,  z: %d%n", point3X, point3Z);*/
+		
+		
+		double[] vertex2P = 
+			{
+				x - point2X,
+				z - point2Z
+			};
+		
+		double[] vertex3P =
+			{
+				x - point3X,
+				z - point3Z
+			};
+		
+		double magnitude2P = MathUtil.magnitude(vertex2P);
+		double magnitude3P = MathUtil.magnitude(vertex3P);
+		
+		int rowNumber = point2Z;
+		int columnNumber = point3X;
+		int triNum = rowNumber * (2 * ((int) mySize.getWidth() - 1)) + columnNumber * 2; 
+		
+		if (magnitude2P == magnitude3P)
+			throw new SharedTriangleException(triNum);
+		
+		if (magnitude2P < magnitude3P)
+			triNum += 1;
+		
+		return triNum;
+	}
+	
+	
+	
+	private class SharedTriangleException extends Exception
+	{
+		private int myBottomTriIndex;
+		
+		public SharedTriangleException() {}
+		
+		public SharedTriangleException(int bottomTriIndex)
+		{
+			myBottomTriIndex = bottomTriIndex;
+		}
+		
+		public int getBottomTriIndex()
+		{
+			return myBottomTriIndex;
+		}
+	}
+	
+	private double[] getNormalForTriangle(int indexNum)
+	{
+		return Arrays.copyOfRange(myNormalList, (indexNum * 3), (indexNum * 3 + 3));
+	}
+	
+	
+	
 	public double[] getNormalAtPoint(double x, double z)
 	{
-		double y = altitude(x, z);
-		double x0 = Math.floor(x);
-		double z0 = Math.floor(z);
-		double z1 = Math.ceil(z);
-		
-		if (z0 == (mySize.getHeight() - 1))
+		try 
 		{
-			z1 = z0 - 1; 
-		}
-		else if (z0 == z1)
+			int triangleIndex = getTriangleNum(x, z);
+			//System.out.println("tri index: "+ triangleIndex);
+			return getNormalForTriangle(triangleIndex);
+		} 
+		catch (SharedTriangleException e)
 		{
-			z1 = z0 + 1;
+			int bottomIndex = e.getBottomTriIndex();
+			int topIndex = bottomIndex + 1;
+			
+			double[] bottomNormal = getNormalForTriangle(bottomIndex);
+			double[] topNormal = getNormalForTriangle(topIndex);
+			double[] averageNormalVector = 
+				{
+					(topNormal[0] + bottomNormal[0]) / 2,
+					(topNormal[1] + bottomNormal[1]) / 2,
+					(topNormal[2] + bottomNormal[2]) / 2,
+				};
+			
+			return averageNormalVector;
 		}
-		
-		double[] vector1 = 
-			{
-				x0 - x,
-				myAltitude[(int) x0][(int) z0] - y,
-				z0 - z
-			};
-		
-		if (MathUtil.magnitude(vector1) == 0)
-		{
-			vector1[0] = -1;
-			vector1[1] = myAltitude[(int) x0][(int) z0] - myAltitude[(int) (x0 + 1)][(int) z0];
-			vector1[2] = 0;
-		}
-		
-		
-		double[] vector2 =
-			{
-				x0 - x,
-				myAltitude[(int) x0][(int) z1] - y,
-				z1 - z
-			};
-		
-		System.out.printf("Vector 1: %.2f, %.2f, %.2f%n", vector1[0], vector1[1], vector1[2]);
-		System.out.printf("Vector 2: %.2f, %.2f, %.2f%n", vector2[0], vector2[1], vector2[2]);
-		double[] normalVector = MathUtil.crossProduct(vector1, vector2);
-		return normalVector;
 		
 	}
 	
