@@ -457,7 +457,7 @@ public class Terrain {
 		double halfwayAcross = (mySize.getWidth() - 1) / 2;
 		translation[0] = -1 * halfwayAcross;
 		translation[1] = -1 * altitude(halfwayAcross, 0) - 0.5;
-		translation[2] = -STARTING_Z_DISTANCE;//-1 * (mySize.getHeight());
+		translation[2] = -STARTING_Z_DISTANCE;
 		
 		return translation;
 	}

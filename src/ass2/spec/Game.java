@@ -33,8 +33,12 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     private int[] myTriIndices;
     private double[] myTranslation;
     private double myRotation;
+    private boolean nightMode = false;
     private static double MOVEMENT_AMOUNT = 0.1;
 	private static double ROTATION_AMOUNT = 5;
+	private Aeroplane myAvatar;
+	
+	// ---- TEXTURE DATA ----
 	private final int NUM_TEXTURES = 4;
 	private MyTexture[] myTextures;
 	private String groundTexture = "groundTexture.jpg";
@@ -52,7 +56,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         myNormals = myTerrain.getNormalList(myTriIndices, myVertices);
         myTranslation = myTerrain.getStartingTranslation();
         myRotation = 0;
-   
+        myAvatar = new Aeroplane(1);
     }
     
     /** 
@@ -86,7 +90,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
      */
     public static void main(String[] args) throws FileNotFoundException {
         //Terrain terrain = LevelIO.load(new File(args[0]));
-    	String testFile = "test2Road.json";
+    	String testFile = "test4.json";
     	Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
@@ -98,6 +102,10 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
         
         gl.glLoadIdentity();
+        gl.glPushMatrix();
+        gl.glTranslated(0, -0.25, -1);
+        drawAvatar(gl);
+        gl.glPopMatrix();
         gl.glRotated(myRotation, 0, 1, 0);
         gl.glTranslated(myTranslation[0], myTranslation[1], myTranslation[2]);
         gl.glScaled(1, 1, -1);
@@ -109,11 +117,22 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         
         drawGround(gl);
         drawTrees(gl);
-        //gl.glTranslated(0, 0.0001, 0);
         drawRoads(gl);
         
 	}
 
+	private void drawAvatar(GL2 gl)
+	{
+		gl.glPushMatrix();
+		double[] positionOnMap = getPositionOnMap();
+		//System.out.printf("Avatar Position: x : %.2f z: %.2f%n", positionOnMap[0], positionOnMap[1]);
+
+		//gl.glTranslated(positionOnMap[0], myTerrain.altitude(positionOnMap[0], positionOnMap[1]) + 0.5, positionOnMap[1]);
+		myAvatar.draw(gl);
+		gl.glPopMatrix();
+		
+	}
+	
 	private void drawRoads(GL2 gl)
 	{
 		gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[3].getTextureId());
@@ -284,21 +303,53 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	private void setLighting(GL2 gl)
 	{
 		// Light property vectors.
-    	float lightAmb[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    	float lightDifAndSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    	float sunDir[] = myTerrain.getSunlight();
-    	float lightPos[] = { sunDir[0], sunDir[1], sunDir[2], 0.0f };
-    	//float globAmb[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+		float lightAmb[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		float lightDifAndSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		
+		if (!nightMode)
+		{
+			gl.glDisable(GL2.GL_LIGHT1);
+			float sunDir[] = myTerrain.getSunlight();
+			float lightPos[] = { sunDir[0], sunDir[1], sunDir[2], 0.0f };
+			gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, lightAmb,0);
+			gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, lightDifAndSpec,0);
+			gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, lightDifAndSpec,0);
 
-    	// Light properties.
-    	//gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, globAmb,0);
-    	gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, lightAmb,0);
-    	gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, lightDifAndSpec,0);
-    	gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, lightDifAndSpec,0);
-    	gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, lightPos,0);
-
-    	gl.glEnable(GL2.GL_LIGHT0); // Enable particular light source.
+			
+			
+			// Light properties.
+			
+			gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, lightPos,0);
+			
+			gl.glEnable(GL2.GL_LIGHT0); // Enable particular light source.			
+		}
+		else
+		{
+			gl.glDisable(GL2.GL_LIGHT0);
+			gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_AMBIENT, lightAmb,0);
+			gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, lightDifAndSpec,0);
+			gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPECULAR, lightDifAndSpec,0);
+			
+			float globAmb[] = { 0.4f, 0.4f, 0.4f, 1.0f };
+			double[] forwardVector = getForwardVector();
+			float[] lightDirection = {(float) forwardVector[0], 0, (float) forwardVector[1]};
+			gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, globAmb,0);
+			
+			
+			gl.glLightf(GL2.GL_LIGHT1, GL2.GL_SPOT_CUTOFF, 22.5f);
+			gl.glLightf(GL2.GL_LIGHT1, GL2.GL_SPOT_EXPONENT, 4);
+			gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPOT_DIRECTION, lightDirection, 0);
+			
+			gl.glLightf(GL2.GL_LIGHT0, GL2.GL_CONSTANT_ATTENUATION, 2.0f);
+			gl.glLightf(GL2.GL_LIGHT0, GL2.GL_LINEAR_ATTENUATION, 1.0f);
+			gl.glLightf(GL2.GL_LIGHT0, GL2.GL_QUADRATIC_ATTENUATION, 0.5f);
+			
+			gl.glEnable(GL2.GL_LIGHT1);
+			
+		}
 	}
+	
+	
 
 	
 	@Override
@@ -359,14 +410,6 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		keyReleased(e);
-		
-	}
-
-	@Override
-	public void keyReleased(KeyEvent e) {
-		
-		
 		switch (e.getKeyCode()) {
 			case KeyEvent.VK_UP:
 				moveForward();
@@ -390,14 +433,38 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		
 	}
 
+	@Override
+	public void keyReleased(KeyEvent e) 
+	{
+		switch (e.getKeyCode())
+		{
+			case KeyEvent.VK_N:
+				setNightMode();
+				break;
+		}
+		
+		
+		
+	}
+	
+	private void setNightMode()
+	{
+		if (nightMode)
+			nightMode = false;
+		else
+			nightMode = true;
+	}
+
 	private void moveBackward() {
+		
+		double[] movementVector = getForwardVector();
 		// Change the Z translation first
-		double zTranslation = MOVEMENT_AMOUNT * Math.cos(Math.toRadians(myRotation));
+		double zTranslation = MOVEMENT_AMOUNT * movementVector[1];
 		
 		myTranslation[2] -= zTranslation;
 		
 		// Shift the X value to the left or right depending on the rotation angle
-		double xMovement = MOVEMENT_AMOUNT * Math.sin(Math.toRadians(myRotation));
+		double xMovement = MOVEMENT_AMOUNT * movementVector[0];
 		
 		myTranslation[0] += xMovement;
 		
@@ -460,21 +527,35 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	
 	private void moveForward()
 	{
+		
+		double[] movementVector = getForwardVector(); 
 		// Change the Z translation first
 		
-		double zTranslation = MOVEMENT_AMOUNT * Math.cos(Math.toRadians(myRotation));
+		double zTranslation = MOVEMENT_AMOUNT * movementVector[1];
 		
 		myTranslation[2] += zTranslation;
 		//System.out.println("x before: " + myTranslation[0]);
 		
 		// Shift the X value to the left or right depending on the rotation angle
-		double xMovement = MOVEMENT_AMOUNT * Math.sin(Math.toRadians(myRotation));
+		double xMovement = MOVEMENT_AMOUNT * movementVector[0];
 	
 		
 		myTranslation[0] -= xMovement;
 		//System.out.println("x after: " + myTranslation[0]);
 		
 		updateAltitudePosition();
+	}
+
+	/**
+	 * Generates a vector representing the direction which the camera 
+	 * is facing. This is used for movement.
+	 */
+	private double[] getForwardVector()
+	{
+		double[] vector = new double[2];
+		vector[0] = Math.sin(Math.toRadians(myRotation));
+		vector[1] = Math.cos(Math.toRadians(myRotation));
+		return vector;
 	}
 	
 	private void rotate(double rotateAmount)
