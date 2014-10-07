@@ -57,7 +57,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         myNormals = myTerrain.getNormalList(myTriIndices, myVertices);
         myTranslation = myTerrain.getStartingTranslation();
         myRotation = 0;
-        myAvatar = new Aeroplane(1);
+        myAvatar = new Aeroplane(0.5);
     }
     
     /** 
@@ -91,7 +91,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
      */
     public static void main(String[] args) throws FileNotFoundException {
         //Terrain terrain = LevelIO.load(new File(args[0]));
-    	String testFile = "test3.json";
+    	String testFile = "test4.json";
     	Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
@@ -413,8 +413,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	public void keyPressed(KeyEvent e) {
 		switch (e.getKeyCode()) {
 			case KeyEvent.VK_UP:
-				moveForward();
-	            break;
+				moveForward(MOVEMENT_AMOUNT);
+				break;
 	            
 			case KeyEvent.VK_DOWN:
 				moveBackward();
@@ -526,19 +526,19 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		return position;
 	}
 	
-	private void moveForward()
+	private void moveForward(double byHowMuch)
 	{
 		
 		double[] movementVector = getForwardVector(); 
 		// Change the Z translation first
 		
-		double zTranslation = MOVEMENT_AMOUNT * movementVector[1];
+		double zTranslation = byHowMuch * movementVector[1];
 		
 		myTranslation[2] += zTranslation;
 		//System.out.println("x before: " + myTranslation[0]);
 		
 		// Shift the X value to the left or right depending on the rotation angle
-		double xMovement = MOVEMENT_AMOUNT * movementVector[0];
+		double xMovement = byHowMuch * movementVector[0];
 	
 		
 		myTranslation[0] -= xMovement;
@@ -566,6 +566,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 			myRotation = -360 + myRotation;
 		else if (myRotation < -180)
 			myRotation = 360 + myRotation;
+		moveForward(0.0001);
 	}
 	
 	

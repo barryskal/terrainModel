@@ -51,48 +51,6 @@ public class Aeroplane
 					gl.glVertex3dv(point.getPointAsDoubleArray(), 0);
 			}
 			
-			/*// Back Face
-			gl.glNormal3d(0, 0, -1);
-			gl.glVertex3d(0, 0, 0);
-			gl.glVertex3d(fuselageSideLength, 0, 0);
-			gl.glVertex3d(fuselageSideLength, fuselageSideLength, 0);
-			gl.glVertex3d(0, fuselageSideLength, 0);
-			
-			// Front Face
-			gl.glNormal3d(0, 0, 1);
-			gl.glVertex3d(0, 0, fuselageLength);
-			gl.glVertex3d(fuselageSideLength, 0, fuselageLength);
-			gl.glVertex3d(fuselageSideLength, fuselageSideLength, fuselageLength);
-			gl.glVertex3d(0, fuselageSideLength, fuselageLength);
-			
-			// Bottom
-			gl.glNormal3d(0, -1, 0);
-			gl.glVertex3d(0, 0, 0);
-			gl.glVertex3d(fuselageSideLength, 0, 0);
-			gl.glVertex3d(fuselageSideLength, 0, fuselageLength);
-			gl.glVertex3d(0, 0, fuselageLength);
-			
-			// Right
-			gl.glNormal3d(1, 0, 0);
-			gl.glVertex3d(fuselageSideLength, 0, 0);
-			gl.glVertex3d(fuselageSideLength, 0, fuselageLength);
-			gl.glVertex3d(fuselageSideLength, fuselageSideLength, fuselageLength);
-			gl.glVertex3d(fuselageSideLength, fuselageSideLength, 0);
-			
-			// Top
-			gl.glNormal3d(0, 1, 0);
-			gl.glVertex3d(fuselageSideLength, fuselageSideLength, 0);
-			gl.glVertex3d(fuselageSideLength, fuselageSideLength, fuselageLength);
-			gl.glVertex3d(0, fuselageSideLength, fuselageLength);
-			gl.glVertex3d(0, fuselageSideLength, 0);
-			
-			// Left
-			gl.glNormal3d(-1, 0, 0);
-			gl.glVertex3d(0, fuselageSideLength, 0);
-			gl.glVertex3d(0, fuselageSideLength, fuselageLength);
-			gl.glVertex3d(0, 0, fuselageLength);
-			gl.glVertex3d(0, 0, 0);*/
-			
 		}
 		gl.glEnd();
 		
