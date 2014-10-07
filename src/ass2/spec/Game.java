@@ -26,7 +26,8 @@ import com.jogamp.opengl.util.FPSAnimator;
  */
 public class Game extends JFrame implements GLEventListener, KeyListener {
 
-    private static final double TREE_HEIGHT = 0.5;
+    private static final double FIELD_OF_VIEW = 60.0;
+	private static final double TREE_HEIGHT = 0.5;
 	private Terrain myTerrain;
     private double[] myVertices;
     private double[] myNormals;
@@ -90,7 +91,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
      */
     public static void main(String[] args) throws FileNotFoundException {
         //Terrain terrain = LevelIO.load(new File(args[0]));
-    	String testFile = "test4.json";
+    	String testFile = "test3.json";
     	Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
@@ -102,10 +103,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
         
         gl.glLoadIdentity();
-        gl.glPushMatrix();
-        gl.glTranslated(0, -0.25, -1);
+        
         drawAvatar(gl);
-        gl.glPopMatrix();
+        
         gl.glRotated(myRotation, 0, 1, 0);
         gl.glTranslated(myTranslation[0], myTranslation[1], myTranslation[2]);
         gl.glScaled(1, 1, -1);
@@ -124,11 +124,12 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	private void drawAvatar(GL2 gl)
 	{
 		gl.glPushMatrix();
-		double[] positionOnMap = getPositionOnMap();
-		//System.out.printf("Avatar Position: x : %.2f z: %.2f%n", positionOnMap[0], positionOnMap[1]);
+		double bottomOfFrame = -1 * Math.sin(Math.toRadians(FIELD_OF_VIEW / 2));
+        gl.glTranslated(0, bottomOfFrame , -1);
+        gl.glScaled(1, 1, -1);
 
-		//gl.glTranslated(positionOnMap[0], myTerrain.altitude(positionOnMap[0], positionOnMap[1]) + 0.5, positionOnMap[1]);
 		myAvatar.draw(gl);
+		
 		gl.glPopMatrix();
 		
 	}
@@ -402,7 +403,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
          gl.glLoadIdentity();
          
          GLU glu = new GLU();
-         glu.gluPerspective(60.0, (float)width/(float)height, 1.0, 50.0);
+         glu.gluPerspective(FIELD_OF_VIEW, (float)width/(float)height, 1.0, 50.0);
         
          gl.glMatrixMode(GL2.GL_MODELVIEW);
 		
