@@ -20,9 +20,10 @@ import com.jogamp.opengl.util.FPSAnimator;
 
 
 /**
- * COMMENT: Comment Game 
+ * The Game class controls the creation and movement around 
+ * the terrain
  *
- * @author malcolmr
+ * @author Barry Skalrud
  */
 public class Game extends JFrame implements GLEventListener, KeyListener {
 
@@ -125,8 +126,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	{
 		gl.glPushMatrix();
 		double bottomOfFrame = -1 * Math.sin(Math.toRadians(FIELD_OF_VIEW / 2));
-        gl.glTranslated(0, bottomOfFrame , -1);
-        gl.glScaled(1, 1, -1);
+		// Move the camera back so that we can see the back of the avatar
+		gl.glScaled(1, 1, -1);
+        gl.glTranslated(0, bottomOfFrame , 1);
 
 		myAvatar.draw(gl);
 		
@@ -486,7 +488,11 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	
 	/**
 	 * Generates a 2 element array containing the current x and z position on 
-	 * the terrain map. This is generated from the camera position
+	 * the terrain map. This is generated from the camera position and the length of the 
+	 * avatar. 
+	 * For the purposes of calculating the camera position, the position on 
+	 * the map corresponds to the front of the avatar. In this case, the nose 
+	 * of the Aeroplane.
 	 * @return	A array of doubles of size 2.
 	 */
 	private double[] getPositionOnMap()
@@ -497,7 +503,12 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		 * the closest edge point
 		 */
 		double rightEdge = myTerrain.size().getWidth() - 1;
-		double xPosition = -1 * myTranslation[0];
+		
+		double backOfAeroplaneFromCamera = 1;
+		double frontOFAvatarFromCamera = backOfAeroplaneFromCamera + myAvatar.getAeroplaneLength();
+		double xPosition = -1 * myTranslation[0] + frontOFAvatarFromCamera * Math.sin(Math.toRadians(myRotation));
+		
+		//double xPosition = -1 * myTranslation[0];
 		if (xPosition < 0)
 			xPosition = 0;
 		else if (xPosition > rightEdge)
@@ -509,11 +520,12 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		 * Use a similar rule for the bottom and top edges of the map
 		 */
 		
-		double zPosition;
-		if (Math.abs(myRotation) < 90)
+		double zPosition = myTranslation[2] + frontOFAvatarFromCamera * Math.cos(Math.toRadians(myRotation));
+		
+		/*if (Math.abs(myRotation) < 90)
 			zPosition = 1 + myTranslation[2];
 		else
-			zPosition = myTranslation[2] - 1;
+			zPosition = myTranslation[2] - 1;*/
 		
 		
 		double topEdge =  myTerrain.size().getHeight() - 1;

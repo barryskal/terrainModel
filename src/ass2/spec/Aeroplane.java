@@ -131,6 +131,11 @@ public class Aeroplane
 		gl.glPopMatrix();
 	}
 	
+	public double getAeroplaneLength()
+	{
+		return fuselageLength;
+	}
+	
 	
 	
 	
