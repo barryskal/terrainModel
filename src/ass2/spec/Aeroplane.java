@@ -136,6 +136,11 @@ public class Aeroplane
 		return fuselageLength;
 	}
 	
+	public double getNoseHeight()
+	{
+		return 0.1 + (fuselageSideLength * myScale) / 2;
+	}
+	
 	
 	
 	

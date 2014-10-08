@@ -101,6 +101,12 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	@Override
 	public void display(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
+		
+		if (nightMode)
+			gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		else
+			gl.glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+		
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
         
         gl.glLoadIdentity();
@@ -179,7 +185,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		
 		for (Tree tree : myTerrain.trees())
 		{
-			drawTree(gl, tree);
+			//drawTree(gl, tree);
+			tree.draw(gl);
 		}
 		
 	}
@@ -333,19 +340,33 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 			gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, lightDifAndSpec,0);
 			gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPECULAR, lightDifAndSpec,0);
 			
-			float globAmb[] = { 0.4f, 0.4f, 0.4f, 1.0f };
+			// Set the light position to the front of the avatar
+			double[] mapPos = getPositionOnMap();
+			double noseHeight = myTerrain.altitude(mapPos[0], mapPos[1]) + myAvatar.getNoseHeight();
+			float[] lightPos = 
+				{
+					(float) mapPos[0],
+					(float) noseHeight,
+					(float) myTranslation[2] ,
+					1.0f
+				};
+			
+			gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, lightPos, 0);
+			
+			float globAmb[] = { 0.2f, 0.2f, 0.2f, 1.0f };
 			double[] forwardVector = getForwardVector();
-			float[] lightDirection = {(float) forwardVector[0], 0, (float) forwardVector[1]};
+			float[] lightDirection = {(float) (forwardVector[0]), 0.0f, (float) (forwardVector[1])};
+			//float[] lightDirection = {0.0f, 0.0f, 1.0f};
 			gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, globAmb,0);
 			
 			
-			gl.glLightf(GL2.GL_LIGHT1, GL2.GL_SPOT_CUTOFF, 22.5f);
+			gl.glLightf(GL2.GL_LIGHT1, GL2.GL_SPOT_CUTOFF, 60.0f);
 			gl.glLightf(GL2.GL_LIGHT1, GL2.GL_SPOT_EXPONENT, 4);
 			gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPOT_DIRECTION, lightDirection, 0);
 			
-			gl.glLightf(GL2.GL_LIGHT0, GL2.GL_CONSTANT_ATTENUATION, 2.0f);
-			gl.glLightf(GL2.GL_LIGHT0, GL2.GL_LINEAR_ATTENUATION, 1.0f);
-			gl.glLightf(GL2.GL_LIGHT0, GL2.GL_QUADRATIC_ATTENUATION, 0.5f);
+			gl.glLightf(GL2.GL_LIGHT1, GL2.GL_CONSTANT_ATTENUATION, 2.0f);
+			gl.glLightf(GL2.GL_LIGHT1, GL2.GL_LINEAR_ATTENUATION, 1.0f);
+			gl.glLightf(GL2.GL_LIGHT1, GL2.GL_QUADRATIC_ATTENUATION, 0.5f);
 			
 			gl.glEnable(GL2.GL_LIGHT1);
 			
@@ -365,7 +386,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 	public void init(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
     	
-    	gl.glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+    	
     	gl.glEnable(GL2.GL_DEPTH_TEST); // Enable depth testing.
 
     	// Normalise all normals
@@ -508,7 +529,6 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		double frontOFAvatarFromCamera = backOfAeroplaneFromCamera + myAvatar.getAeroplaneLength();
 		double xPosition = -1 * myTranslation[0] + frontOFAvatarFromCamera * Math.sin(Math.toRadians(myRotation));
 		
-		//double xPosition = -1 * myTranslation[0];
 		if (xPosition < 0)
 			xPosition = 0;
 		else if (xPosition > rightEdge)
@@ -522,10 +542,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		
 		double zPosition = myTranslation[2] + frontOFAvatarFromCamera * Math.cos(Math.toRadians(myRotation));
 		
-		/*if (Math.abs(myRotation) < 90)
-			zPosition = 1 + myTranslation[2];
-		else
-			zPosition = myTranslation[2] - 1;*/
+		
 		
 		
 		double topEdge =  myTerrain.size().getHeight() - 1;
@@ -571,6 +588,13 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		return vector;
 	}
 	
+	/**
+	 * Rotates the camera position, but also moves forward by a small amount.
+	 * This is done to account for the case where the camera is at the base
+	 * of a hill and it turns in to it. By moving forward a small amount
+	 * the altitude of the current position is checked. 
+	 * @param rotateAmount	The amount you want to rotate, in degrees
+	 */
 	private void rotate(double rotateAmount)
 	{
 		myRotation += rotateAmount;
