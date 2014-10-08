@@ -17,16 +17,13 @@ public class Tree {
 	public static double TREE_RADIUS = 0.05;
 	public static double LEAVES_RADIUS = 0.25;
 	private static int NUMBER_OF_TRUNK_STRIPS = 16;
-	private String treeTrunkTexture = "treeTrunkTexture.jpg";
-	private String treeTrunkTextureExt = "jpg";
-	private String treeLeafTexture = "treeLeavesTexture.jpg";
-	private String treeLeafTextureExt = "jpg";
-	private MyTexture[] myTextures;
+	List<Polygon> trunkMesh;
 
     private Point myPos;
     
     public Tree(double x, double y, double z) {
         myPos = new Point(x, y, z);
+        generateTrunkMesh();
     }
     
     public double[] getPosition() {
@@ -40,12 +37,14 @@ public class Tree {
     	return leavesPosition;
     }
     
-    public void draw(GL2 gl)
+    public void draw(GL2 gl, MyTexture trunkTexture, MyTexture leafTexture)
     {
     	gl.glPushMatrix();
     	
     	gl.glTranslated(myPos.x, myPos.y, myPos.z);
+    	gl.glBindTexture(GL2.GL_TEXTURE_2D, trunkTexture.getTextureId());
     	drawTrunk(gl);
+    	gl.glBindTexture(GL2.GL_TEXTURE_2D, leafTexture.getTextureId());
     	drawLeaves(gl);
     	gl.glPopMatrix();
     }
@@ -54,7 +53,6 @@ public class Tree {
     {
     	
     	gl.glTranslated(0, TREE_HEIGHT + LEAVES_RADIUS, 0);
-		gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[1].getTextureId());
 		
 		GLU glu = new GLU();
         GLUquadric quadric = glu.gluNewQuadric();
@@ -65,20 +63,10 @@ public class Tree {
     
     private void drawTrunk(GL2 gl)
     {
-    	Polygon trunkProfile = getTrunkProfile();
-    	List<Polygon> trunkMesh = trunkProfile.extrudedPolygonMesh(new double[] {0, 1, 0}, TREE_HEIGHT);
     	
-    	/* 
-    	 * We don't need the top or bottom faces of the trunk, just
-    	 * remove them
-    	 */
-    	
-    	trunkMesh.remove(0);
-    	trunkMesh.remove(0);
     	
     	double texturePosition = 0;
 		double textureIncrement = (double) 1 / NUMBER_OF_TRUNK_STRIPS;
-    	gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[1].getTextureId());
     	gl.glPolygonMode(GL2.GL_FRONT, GL2.GL_FILL);
 		gl.glBegin(GL2.GL_QUADS);
 		{
@@ -97,11 +85,26 @@ public class Tree {
 					point = pointList[3];
 					plotPoint(gl, point, new double[] {texturePosition, 1});
 					
+					texturePosition += textureIncrement;
 			}
 		}
 		gl.glEnd();
     	
     }
+
+	private void generateTrunkMesh() {
+		Polygon trunkProfile = getTrunkProfile();
+    	trunkMesh = trunkProfile.extrudedPolygonMesh(new double[] {0, 1, 0}, TREE_HEIGHT);
+    	
+    	/* 
+    	 * We don't need the top or bottom faces of the trunk, just
+    	 * remove them
+    	 */
+    	
+    	trunkMesh.remove(0);
+    	trunkMesh.remove(0);
+    	//System.out.println(trunkMesh.size());
+	}
 
 	private void plotPoint(GL2 gl, Point point, double[] texturePoint) {
 		gl.glNormal3dv(getNormalOfPoint(point), 0);
@@ -109,7 +112,8 @@ public class Tree {
 		gl.glVertex3dv(point.getPointAsDoubleArray(), 0);
 	}
 
-	private double[] getNormalOfPoint(Point point) {
+	private double[] getNormalOfPoint(Point point) 
+	{
 		double[] normal = 
 			{
 				point.x,
@@ -119,22 +123,16 @@ public class Tree {
 		return normal;
 	}
     
-    
-    private void initialiseTextures(GL2 gl)
-    {
-    	myTextures = new MyTexture[2];
-    	myTextures[0] = new MyTexture(gl, treeTrunkTexture, treeTrunkTextureExt);
-    	myTextures[1] = new MyTexture(gl, treeLeafTexture, treeLeafTextureExt);
-    }
-    
-    
     private Polygon getTrunkProfile()
     {
 		double theta = 0;
 		double angleIncrement = 2 * Math.PI / NUMBER_OF_TRUNK_STRIPS;
 		Point[] trunkPoints = new Point[NUMBER_OF_TRUNK_STRIPS];
 		for (int i = 0; i < NUMBER_OF_TRUNK_STRIPS; i++)
+		{
 			trunkPoints[i] = new Point(Tree.TREE_RADIUS * Math.cos(theta + angleIncrement), 0, Tree.TREE_RADIUS * Math.sin(theta + angleIncrement));
+			theta += angleIncrement;
+		}
 		
 		return new Polygon(trunkPoints);
     }

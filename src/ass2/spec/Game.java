@@ -186,7 +186,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		for (Tree tree : myTerrain.trees())
 		{
 			//drawTree(gl, tree);
-			tree.draw(gl);
+			tree.draw(gl, myTextures[1], myTextures[2]);
 		}
 		
 	}

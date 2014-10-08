@@ -1,6 +1,7 @@
 package ass2.spec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -53,20 +54,29 @@ public class Polygon
 		Point[] backPoints = new Point[size];
 		// Create the back face points
 		for (int i = 0; i < size; i++)
-		{
-			
 			backPoints[i] = new Point(
 					myPoints[i].x + normalVector[0] * thickness, 
 					myPoints[i].y + normalVector[1] * thickness, 
-					myPoints[i].z + normalVector[2] * thickness); 
-		}
-		reverseArray(backPoints);
+					myPoints[i].z + normalVector[2] * thickness);
+		
+		/*
+		 * Note that the array of back points are drawn in the 
+		 * same order as the front face. This means that the normal 
+		 * will point in the same direction as the front face. 
+		 * That is not what we want, so we take a copy of the 
+		 * back points array and reverse it.  
+		 */
+		
+		Point[] reversedBackPoints = Arrays.copyOf(backPoints, size);
+		reverseArray(reversedBackPoints);
+		
+		//reverseArray(backPoints);
 		/*for (Point point : backPoints)
 			System.out.printf("%.2f, %.2f, %.2f%n", point.x, point.y, point.z);
 		System.out.println("----");
 		for (Point point : backPoints)
 			System.out.printf("%.2f, %.2f, %.2f%n", point.x, point.y, point.z);*/
-		polygonList.add(new Polygon(backPoints));
+		polygonList.add(new Polygon(reversedBackPoints));
 		
 		// Create QUAD side elements representing the thickness
 		
@@ -75,9 +85,9 @@ public class Polygon
 			Point[] newSurfaceQuad = new Point[4];
 			
 			newSurfaceQuad[0] = myPoints[i];
-			newSurfaceQuad[1] = backPoints[3 - i];
-			newSurfaceQuad[2] = backPoints[(6 - i) % size];
-			newSurfaceQuad[3] = myPoints[(i + 1) % size];
+			newSurfaceQuad[1] = myPoints[(i + 1) % size]; //backPoints[3 - i];
+			newSurfaceQuad[2] = backPoints[(i + 1) % size]; //backPoints[(6 - i) % size];
+			newSurfaceQuad[3] = backPoints[i];//myPoints[(i + 1) % size];
 			
 			polygonList.add(new Polygon(newSurfaceQuad));
 		}
