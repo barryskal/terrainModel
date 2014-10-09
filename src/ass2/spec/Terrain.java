@@ -127,14 +127,24 @@ public class Terrain {
      * Get the altitude at an arbitrary point. 
      * Non-integer points should be interpolated from neighbouring grid points
      * 
-     * TO BE COMPLETED
-     * 
      * @param x
      * @param z
      * @return
      */
     public double altitude(double x, double z) 
     {
+    	
+    	/*
+		 * As a triangular mesh is used for the terrain, we can't just use 
+	     * straight interpolation between the adjacent grid points. 
+	     * We have to interpolate using only the triangle containing the point
+	     * in question. 
+	     * 
+	     * We do this by isolating the grid "square" containing the point
+	     * and calculating the angle to the point from the upper left 
+	     * hand corner of that square. If the angle is <= 45 then 
+	     * we are in the "bottom" triangle.
+    	 */
         
     	if (isInvalidLocation(x, z))
     		return 0;
@@ -143,15 +153,86 @@ public class Terrain {
     	int rightX = (int) Math.ceil(x);
     	int nearZ = (int) Math.floor(z);
     	int farZ = (int) Math.ceil(z);
-    	double bottomY, topY;
+    	double bottomY, topY, leftY, rightY, lerpFactor;
     	
-    	if (leftX == rightX)
+    	// Look for the easy cases first
+    	if (leftX == rightX && nearZ == farZ)
+    	{
+    		return getGridAltitude(rightX, farZ);
+    	}
+    	else if (leftX == rightX)
     	{
     		bottomY = getGridAltitude(leftX, nearZ);
     		topY = getGridAltitude(leftX, farZ);
+    		lerpFactor = z - nearZ;
+    		return bottomY + lerpFactor * (topY - bottomY);
+    	}
+    	else if (nearZ == farZ)
+    	{
+    		leftY = getGridAltitude(leftX, farZ);
+    		rightY = getGridAltitude(rightX, farZ);
+    		lerpFactor = x - leftX;
+    		return leftY + lerpFactor * (rightY - leftY);
     	}
     	else
     	{
+    		/*
+    		 * Find the angle from the top left hand corner to the point
+    		 */
+    		double angle = Math.atan((x - leftX) / (z - nearZ));
+    		double triangleLine = Math.PI / 4;
+    		
+    		if (angle <= triangleLine)
+    		{
+    			/*
+    			 * Bottom triangle
+    			 * 
+    			 * Interpolate the altitude on the left hand edge of the square 
+    			 * then interpolate on the hypotenuse of the triangle
+    			 */
+    			double topLeftY = getGridAltitude(leftX, nearZ);
+    			double bottomLeftY = getGridAltitude(leftX, farZ);
+    			lerpFactor = z - nearZ;
+    			leftY = topLeftY + lerpFactor * (bottomLeftY - topLeftY);
+    			
+    			// Calculate the length along the hypotenuse
+    			double r = lerpFactor / Math.cos(triangleLine);
+    			
+    			// Interpolate the altitude along the hypotenuse
+    			double bottomRightY = getGridAltitude(rightX, farZ);
+    			rightY = topLeftY + (r / Math.sqrt(2)) * (bottomRightY - topLeftY);
+    			
+    			/*
+    			 * Interpolate between the point on the left edge and the point
+    			 * on the hypotenuse.
+    			 */
+    			
+    			double xOnHypotenuse = r * Math.sin(triangleLine) + leftX;
+    			double t = (x - leftX) / (xOnHypotenuse - leftX);
+    			
+    			return leftY + t * (rightY - leftY); 
+    		}
+    		else
+    		{
+    			// Top triangle
+    			double topRightY = getGridAltitude(rightX, nearZ);
+    			double bottomRightY = getGridAltitude(rightX, farZ);
+    			lerpFactor = z - nearZ;
+    			rightY = topRightY + lerpFactor * (bottomRightY - topRightY);
+    			
+    			double r = lerpFactor / Math.sin(triangleLine);
+    			
+    			double topLeftY = getGridAltitude(leftX, nearZ);
+    			leftY = topLeftY + (r / Math.sqrt(2)) * (bottomRightY - topLeftY);
+    			
+    			double xOnHypotenuse = r * Math.cos(triangleLine) + leftX;
+    			double t = (x - xOnHypotenuse) / (rightX - xOnHypotenuse);
+    			
+    			return leftY + t * (rightY - leftY);
+    		}
+    	}
+    		
+    		/*
     		double lerpFactor = x - leftX;
     		double altAtLeftX = getGridAltitude(leftX, nearZ);
     		double altAtRightX = getGridAltitude(rightX, nearZ);
@@ -171,7 +252,7 @@ public class Terrain {
     		double lerpFactor = z - nearZ;
     		double altAtZ = bottomY + lerpFactor*(topY - bottomY);
     		return altAtZ;
-    	}
+    	}*/
         
     }
     

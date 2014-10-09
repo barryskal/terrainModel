@@ -92,7 +92,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
      */
     public static void main(String[] args) throws FileNotFoundException {
         //Terrain terrain = LevelIO.load(new File(args[0]));
-    	String testFile = "test4.json";
+    	String testFile = "test2Road2.json";
     	Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
@@ -464,6 +464,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		{
 			case KeyEvent.VK_N:
 				setNightMode();
+				break;
+			case KeyEvent.VK_D:
+				myTranslation[1] += 1;
 				break;
 		}
 		
