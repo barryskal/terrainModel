@@ -18,6 +18,7 @@ public class Road {
     public static String TEXTURE_FILE = "roadTexture.jpg";
     public static String TEXTURE_EXTENSION = "jpg";
     private static final double EPSILON = 0.001;
+    private static final int NUM_STRIPS = 10;
     
     /** 
      * Create a new road starting at the specified point
@@ -175,6 +176,13 @@ public class Road {
     	return point;
     }
     
+    /**
+     * Calculates the normal to the surface at the given point. 
+     * @param t		The point at which you want the normal vector.
+     * @param terrain	The terrain describing the surface being used
+     * to generate the normal vector
+     * @return	A double array containing the normal vector.
+     */
     private double[] getNormalVectorAtPoint(double t, Terrain terrain)
     {
     	
@@ -184,6 +192,17 @@ public class Road {
     	return MathUtil.crossProduct(terrain.getNormalAtPoint(point[0], point[2]), tangentVector);
     }
     
+    /**
+     * Determine the tangent at the point given by t. 
+     * This is done using the value given in offset to find the points at 
+     * (t - offset) and (t + offset) which are used to calculate the tangent. 
+     * The points on the curve are projected on to the terrain in order to 
+     * take the road curvature effects in to account.
+     * @param t		The point along the spine at which you want the tangent
+     * @param offset	The offset to the point before and the point after.
+     * @param terrain	The terrain on to which the spine is being projected.
+     * @return		A double array containing the tangent vector.
+     */
     private double[] getTangentVector(double t, double offset, Terrain terrain)
     {
     	double[] pointBefore;
@@ -221,92 +240,116 @@ public class Road {
      * 		 ----  ----
      * 		1    2 5   6
      * 
-     * The width of the quads is the width provided in the json file.
-     * The height of the quads is defined by the constant PIECE_HEIGHT
+     * The width of the quads (point 0-1) is the width provided in the json file.
+     * The height of the quads (point 1-2) is defined by the constant PIECE_HEIGHT
      * Note that the height may actually change due to the curvature of 
      * the road. To account for this, we determine the normal vector
      * to the spine at the point along the road we are currently 
      * examining. 
+     * 
+     * Also note that each of the quad elements shown above are split in 
+     * to a smaller number of equal size quads, given by the constant,
+     * NUM_STRIPS. 
      * @param gl	The GL2 object being used for this scene
      */
     public void draw(GL2 gl, Terrain terrain)
     {
-    	double[] tempSurfaceNormal = {0, 1, 0};
-    	int numQuads = (int) (size() / PIECE_HEIGHT) - 1; 
+    	int numQuads = (int) (size() / PIECE_HEIGHT) - 1;
+    	double quadStripLength = myWidth / NUM_STRIPS;
+    	double textureStripLength = 1 / NUM_STRIPS;
     	gl.glPolygonMode(GL2.GL_FRONT, GL2.GL_FILL);
 		gl.glBegin(GL2.GL_QUADS);
 		{
 			for (double quadNum = 0; quadNum < numQuads; quadNum++)
 			{
+				
 				double t = quadNum * PIECE_HEIGHT;
 				double[] currentPoint = getPointOnTerrain(t, terrain);
 				double[] normalAtCurrentPoint = getNormalVectorAtPoint(t, terrain);
-				double[] point0 = 
-					{
-						currentPoint[0] + normalAtCurrentPoint[0] * (myWidth / 2),
-						0,
-						currentPoint[2] + normalAtCurrentPoint[2] * (myWidth / 2)
-					};
 				
-				point0[1] = terrain.altitude(point0[0], point0[2]);
-				double[] normalAtPoint0 = terrain.getNormalAtPoint(point0[0], point0[2]);
-				
-				offsetPointFromSurface(point0, normalAtPoint0);
-				
-				gl.glNormal3dv(normalAtPoint0, 0);
-				gl.glTexCoord2d(0.0, 1.0);
-				gl.glVertex3dv(point0, 0);
-				
-				double[] point1 = 
-					{
-						currentPoint[0] - normalAtCurrentPoint[0] * (myWidth / 2),
-						0,
-						currentPoint[2] - normalAtCurrentPoint[2] * (myWidth / 2)
-					};
-				
-				point1[1] = terrain.altitude(point1[0], point1[2]);
-				double[] normalAtPoint1 = terrain.getNormalAtPoint(point1[0], point1[2]);
-				
-				offsetPointFromSurface(point1, normalAtPoint1); 
-				
-				gl.glNormal3dv(normalAtPoint1, 0);
-				gl.glTexCoord2d(0.0, 0.0);
-				gl.glVertex3dv(point1, 0);
-				
-				//System.out.println("t: " + t);
 				double[] nextPoint = getPointOnTerrain(t + PIECE_HEIGHT, terrain);
 				double[] normalAtNextPoint = getNormalVectorAtPoint(t + PIECE_HEIGHT, terrain);
-				double[] point2 = 
-					{
-						nextPoint[0] - normalAtNextPoint[0] * (myWidth / 2),
-						0,
-						nextPoint[2] - normalAtNextPoint[2] * (myWidth / 2)
-					};
 				
-				point2[1] = terrain.altitude(point2[0], point2[2]);
-				double[] normalAtPoint2 = terrain.getNormalAtPoint(point2[0], point2[2]);
+				double positionOfTopPoints = myWidth / 2;
+				double positionOfBottomPoints = positionOfTopPoints - quadStripLength;
+				double topTexturePoint = 1;
+				double bottomTexturePoint = topTexturePoint - textureStripLength;
 				
-				offsetPointFromSurface(point2, normalAtPoint2);
+				for (int stripNum = 0; stripNum < NUM_STRIPS; stripNum++)
+				{
+					double[] point0 = 
+						{
+							currentPoint[0] + normalAtCurrentPoint[0] * positionOfTopPoints,
+							0,
+							currentPoint[2] + normalAtCurrentPoint[2] * positionOfTopPoints
+						};
+					
+					point0[1] = terrain.altitude(point0[0], point0[2]);
+					double[] normalAtPoint0 = terrain.getNormalAtPoint(point0[0], point0[2]);
+					
+					// Offset the point from the surface a little bit so it is easily visible
+					offsetPointFromSurface(point0, normalAtPoint0);
+					
+					gl.glNormal3dv(normalAtPoint0, 0);
+					gl.glTexCoord2d(0.0, topTexturePoint);
+					gl.glVertex3dv(point0, 0);
+					
+					double[] point1 = 
+						{
+							currentPoint[0] + normalAtCurrentPoint[0] * positionOfBottomPoints,
+							0,
+							currentPoint[2] + normalAtCurrentPoint[2] * positionOfBottomPoints
+						};
+					
+					point1[1] = terrain.altitude(point1[0], point1[2]);
+					double[] normalAtPoint1 = terrain.getNormalAtPoint(point1[0], point1[2]);
+					
+					offsetPointFromSurface(point1, normalAtPoint1); 
+					
+					gl.glNormal3dv(normalAtPoint1, 0);
+					gl.glTexCoord2d(0.0, bottomTexturePoint);
+					gl.glVertex3dv(point1, 0);
+					
+					
+					double[] point2 = 
+						{
+							nextPoint[0] + normalAtNextPoint[0] * positionOfBottomPoints,
+							0,
+							nextPoint[2] + normalAtNextPoint[2] * positionOfBottomPoints
+						};
+					
+					point2[1] = terrain.altitude(point2[0], point2[2]);
+					double[] normalAtPoint2 = terrain.getNormalAtPoint(point2[0], point2[2]);
+					
+					offsetPointFromSurface(point2, normalAtPoint2);
+					
+					gl.glNormal3dv(normalAtPoint2, 0);
+					gl.glTexCoord2d(1.0, bottomTexturePoint);
+					gl.glVertex3dv(point2, 0);
+					double[] point3 = 
+						{
+							nextPoint[0] + normalAtNextPoint[0] * positionOfTopPoints,
+							0,
+							nextPoint[2] + normalAtNextPoint[2] * positionOfTopPoints
+						};
+					
+					point3[1] = terrain.altitude(point3[0], point3[2]);
+					
+					double[] normalAtPoint3 = terrain.getNormalAtPoint(point3[0], point3[2]);
+					offsetPointFromSurface(point3, normalAtPoint3);
+					
+					gl.glNormal3dv(normalAtPoint3, 0);
+					gl.glTexCoord2d(1.0, topTexturePoint);
+					gl.glVertex3dv(point3, 0);
 				
-				gl.glNormal3dv(normalAtPoint2, 0);
-				gl.glTexCoord2d(1.0, 0.0);
-				gl.glVertex3dv(point2, 0);
+					positionOfTopPoints = positionOfBottomPoints;
+					positionOfBottomPoints -= quadStripLength;
+					
+					topTexturePoint = bottomTexturePoint;
+					bottomTexturePoint -= textureStripLength;
+					
+				}
 				
-				double[] point3 = 
-					{
-						nextPoint[0] + normalAtNextPoint[0] * (myWidth / 2),
-						0,
-						nextPoint[2] + normalAtNextPoint[2] * (myWidth / 2)
-					};
-				
-				point3[1] = terrain.altitude(point3[0], point3[2]);
-				
-				double[] normalAtPoint3 = terrain.getNormalAtPoint(point3[0], point3[2]);
-				offsetPointFromSurface(point3, normalAtPoint3);
-				
-				gl.glNormal3dv(normalAtPoint3, 0);
-				gl.glTexCoord2d(1.0, 1.0);
-				gl.glVertex3dv(point3, 0);
 			}
 		}
 		gl.glEnd();

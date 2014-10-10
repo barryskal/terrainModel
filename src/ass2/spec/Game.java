@@ -12,7 +12,6 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLJPanel;
 import javax.media.opengl.glu.GLU;
-import javax.media.opengl.glu.GLUquadric;
 import javax.swing.JFrame;
 
 import com.jogamp.opengl.util.FPSAnimator;
@@ -28,7 +27,6 @@ import com.jogamp.opengl.util.FPSAnimator;
 public class Game extends JFrame implements GLEventListener, KeyListener {
 
     private static final double FIELD_OF_VIEW = 60.0;
-	private static final double TREE_HEIGHT = 0.5;
 	private Terrain myTerrain;
     private double[] myVertices;
     private double[] myNormals;
@@ -92,7 +90,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
      */
     public static void main(String[] args) throws FileNotFoundException {
         //Terrain terrain = LevelIO.load(new File(args[0]));
-    	String testFile = "test2Road2.json";
+    	String testFile = "test2Road.json";
     	Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
@@ -185,129 +183,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
 		
 		for (Tree tree : myTerrain.trees())
 		{
-			//drawTree(gl, tree);
 			tree.draw(gl, myTextures[1], myTextures[2]);
 		}
 		
-	}
-	
-	private void drawTree(GL2 gl, Tree tree)
-	{
-		drawTrunk(gl, tree);
-		gl.glPushMatrix();
-		double[] leavesPosition = tree.getCentreOfLeaves();
-		gl.glTranslated(leavesPosition[0], leavesPosition[1], leavesPosition[2]);
-		gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[2].getTextureId());
-		drawLeaves();
-		gl.glPopMatrix();
-	}
-	
-	
-	private void drawLeaves()
-	{
-		
-		GLU glu = new GLU();
-        GLUquadric quadric = glu.gluNewQuadric();
-        glu.gluQuadricTexture(quadric, true);
-        glu.gluQuadricNormals(quadric, GLU.GLU_SMOOTH);
-        glu.gluSphere(quadric, Tree.LEAVES_RADIUS, 32, 32);
-	}
-
-	private void drawTrunk(GL2 gl, Tree tree) {
-		// Draw the trunk as a hollow cylinder
-		gl.glBindTexture(GL2.GL_TEXTURE_2D, myTextures[1].getTextureId());
-		int numberOfTrunkStrips = 16;
-		double theta = 0;
-		double angleIncrement = 2 * Math.PI / numberOfTrunkStrips;
-		double texturePosition = 0;
-		double textureIncrement = (double) 1 / numberOfTrunkStrips;
-		double topOfTree = tree.getPosition()[1] + TREE_HEIGHT;
-		double[] treeBase = tree.getPosition();
-		
-		gl.glPolygonMode(GL2.GL_FRONT, GL2.GL_FILL);
-		gl.glBegin(GL2.GL_QUADS);
-		{
-			for (int i = 0; i < numberOfTrunkStrips; i++)
-			{
-				double[] treePoint1 = 
-					{
-						(treeBase[0] + Tree.TREE_RADIUS * Math.cos(theta + angleIncrement)), 
-						treeBase[1], 
-						(treeBase[2] + Tree.TREE_RADIUS * Math.sin(theta + angleIncrement))
-					};
-				
-				/*
-				 * Adjust the height altitude of the base using the just calculated
-				 * x and z coordintaes.
-				 */
-				
-				treePoint1[1] = myTerrain.altitude(treePoint1[0], treePoint1[2]);
-				
-				double[] treePoint2 = 
-					{
-						treePoint1[0],
-						topOfTree,
-						treePoint1[2]
-					};
-				
-				
-				double[] treeNormal1 = 
-					{
-						treePoint1[0] - treeBase[0],
-						0,
-						treePoint1[2] - treeBase[2]
-					};
-				
-				gl.glNormal3dv(treeNormal1, 0);
-				gl.glTexCoord2d((texturePosition + textureIncrement), 0.0);
-				//gl.glTexCoord2d(1.0, 0.0);
-				gl.glVertex3dv(treePoint1, 0);
-				gl.glTexCoord2d((texturePosition + textureIncrement), 1.0);
-				//gl.glTexCoord2d(1.0, 1.0);
-				gl.glVertex3dv(treePoint2, 0);
-				
-				double[] treePoint3 = 
-					{
-						(treeBase[0] + Tree.TREE_RADIUS * Math.cos(theta)), 
-						topOfTree, 
-						(treeBase[2] + Tree.TREE_RADIUS * Math.sin(theta))
-					};
-				
-				double[] treePoint4 = 
-					{
-						(treeBase[0] + Tree.TREE_RADIUS * Math.cos(theta)), 
-						treeBase[1], 
-						(treeBase[2] + Tree.TREE_RADIUS * Math.sin(theta))
-					};
-				
-				/*
-				 * Adjust the height altitude of the base using the just calculated
-				 * x and z coordintaes.
-				 */
-				
-				treePoint4[1] = myTerrain.altitude(treePoint4[0], treePoint4[2]);
-				
-				double[] treeNormal2 = 
-					{
-						treePoint4[0] - treeBase[0],
-						0,
-						treePoint4[2] - treeBase[2]
-					};
-				
-				gl.glNormal3dv(treeNormal2, 0);
-				gl.glTexCoord2d(texturePosition, 1.0);
-				//gl.glTexCoord2d(0.0, 1.0);
-				gl.glVertex3dv(treePoint3, 0);
-				gl.glTexCoord2d(texturePosition, 0.0);
-				//gl.glTexCoord2d(0.0, 0.0);
-				gl.glVertex3dv(treePoint4, 0);
-				
-				theta += angleIncrement;
-				texturePosition += textureIncrement;
-			}
-		}
-		gl.glEnd();
-		gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
 	}
 	
 	private void setLighting(GL2 gl)
