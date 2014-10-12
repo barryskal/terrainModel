@@ -482,9 +482,12 @@ public class Terrain {
 	
 	private class SharedTriangleException extends Exception
 	{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		private int myBottomTriIndex;
 		
-		public SharedTriangleException() {}
 		
 		public SharedTriangleException(int bottomTriIndex)
 		{
@@ -506,10 +509,19 @@ public class Terrain {
 	
 	public double[] getNormalAtPoint(double x, double z)
 	{
+		/*
+		 * If the point is off the map, just return the default normal
+		 * which is for a flat plane
+		 */
+		double defaultNormal[] = {0,1,0};
+		if (x < 0 || x > (mySize.getWidth() - 1) || z < 0 || z > (mySize.getHeight() - 1))
+			return defaultNormal;
+		
 		try 
 		{
 			int triangleIndex = getTriangleNum(x, z);
 			//System.out.println("tri index: "+ triangleIndex);
+			//System.out.printf("x: %.2f, z: %.2f, triIndex: %d%n", x, z, triangleIndex);
 			return getNormalForTriangle(triangleIndex);
 		} 
 		catch (SharedTriangleException e)

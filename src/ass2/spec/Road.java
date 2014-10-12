@@ -18,7 +18,7 @@ public class Road {
     public static String TEXTURE_FILE = "roadTexture.jpg";
     public static String TEXTURE_EXTENSION = "jpg";
     private static final double EPSILON = 0.001;
-    private static final int NUM_STRIPS = 10;
+    private static final int NUM_STRIPS = 20;
     
     /** 
      * Create a new road starting at the specified point
