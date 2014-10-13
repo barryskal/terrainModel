@@ -82,9 +82,6 @@ public class Aeroplane
 				new Point(0, 0, 0.25),
 			};
 		Polygon wingPolygon = new Polygon(wingProfile);
-		double[] array = wingPolygon.getNormal();
-		int i = 0;
-		//System.out.printf("| %.2f  %.2f  %.2f |%n", array[i], array[i + 1], array[i + 2]);
 		double[] extrusionVector = {0, 1, 0};
 		List<Polygon> wingMesh = wingPolygon.extrudedPolygonMesh(extrusionVector, WING_THICKNESS);
 		return wingMesh;
@@ -138,7 +135,9 @@ public class Aeroplane
 	
 	public double getNoseHeight()
 	{
-		return 0.1 + (fuselageSideLength * myScale) / 2;
+		// Assume the aeroplane is "flying"
+		double offsetFromGround = 0.1;
+		return offsetFromGround + (fuselageSideLength * myScale) / 2;
 	}
 	
 	

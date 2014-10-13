@@ -44,6 +44,16 @@ public class Polygon
         myNormal = n;
     }
 	
+	/**
+	 * Uses this Polygon as a profile which is extruded along a normal vector for a given length. 
+	 * The sides of the polygon mesh are new Polygon objects that are drawn as QUAD elements. 
+	 * @param normalVector	The vector along which the profile is extruded. 
+	 * @param thickness		The extrusion length. 
+	 * @return				A List of Polygon objects which represent the mesh of the polygon.
+	 * Note that the first element of the list is the the original profile, and the second element
+	 * is the face at the end of the extrusion. The rest of the elements are QUADS that represent 
+	 * the side of the mesh.
+	 */
 	public List<Polygon> extrudedPolygonMesh(double[] normalVector, double thickness)
 	{
 		ArrayList<Polygon> polygonList = new ArrayList<Polygon>();
@@ -70,12 +80,6 @@ public class Polygon
 		Point[] reversedBackPoints = Arrays.copyOf(backPoints, size);
 		reverseArray(reversedBackPoints);
 		
-		//reverseArray(backPoints);
-		/*for (Point point : backPoints)
-			System.out.printf("%.2f, %.2f, %.2f%n", point.x, point.y, point.z);
-		System.out.println("----");
-		for (Point point : backPoints)
-			System.out.printf("%.2f, %.2f, %.2f%n", point.x, point.y, point.z);*/
 		polygonList.add(new Polygon(reversedBackPoints));
 		
 		// Create QUAD side elements representing the thickness
@@ -85,9 +89,9 @@ public class Polygon
 			Point[] newSurfaceQuad = new Point[4];
 			
 			newSurfaceQuad[0] = myPoints[i];
-			newSurfaceQuad[1] = myPoints[(i + 1) % size]; //backPoints[3 - i];
-			newSurfaceQuad[2] = backPoints[(i + 1) % size]; //backPoints[(6 - i) % size];
-			newSurfaceQuad[3] = backPoints[i];//myPoints[(i + 1) % size];
+			newSurfaceQuad[1] = myPoints[(i + 1) % size]; 
+			newSurfaceQuad[2] = backPoints[(i + 1) % size]; 
+			newSurfaceQuad[3] = backPoints[i];
 			
 			polygonList.add(new Polygon(newSurfaceQuad));
 		}

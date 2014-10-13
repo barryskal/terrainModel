@@ -89,9 +89,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
      * @throws FileNotFoundException
      */
     public static void main(String[] args) throws FileNotFoundException {
-        //Terrain terrain = LevelIO.load(new File(args[0]));
-    	String testFile = "test0.json";
-    	Terrain terrain = LevelIO.load(new File(testFile));
+        Terrain terrain = LevelIO.load(new File(args[0]));
+    	//String testFile = "test0.json";
+    	//Terrain terrain = LevelIO.load(new File(testFile));
         Game game = new Game(terrain);
         game.run();
     }

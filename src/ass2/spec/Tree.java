@@ -103,7 +103,6 @@ public class Tree {
     	
     	trunkMesh.remove(0);
     	trunkMesh.remove(0);
-    	//System.out.println(trunkMesh.size());
 	}
 
 	private void plotPoint(GL2 gl, Point point, double[] texturePoint) {

@@ -1,0 +1,17 @@
+COMP9415 - S2 2014, Assignment 2 Submission 
+By Barry Skalrud - 3021043
+
+I have completed all base elements of the assignment including:
+- Terrain 
+- Trees
+- Lighting
+- Camera
+- Road
+- Texturing
+
+The extensions I have attempted are:
+- Avatar - The avatar I have created is meant to look like a very simplified aeroplane, and the code used to create it can be found in the Aeroplane class. The Camera is implemented in such a way that the height above the terrain is determined by adding an offset to the altitude of the terrain at the "nose" of the aeroplane. You can use any map to have a look at a demonstration of the avatar  
+
+- Night Mode - I have added a night mode with low global ambient lighting, black background and a spot light positioned at the "nose" of the avater. The night mode can be toggled by pressing 'n' during execution. You can use any map to have a look at a demonstration of the night mode 
+
+- Road Extrusion - I have improved the Road class so that the road can follow the terrain. This has affected the Road.draw method. I have also added some additional methods in the Terrain class (getNormalAtPoint, getTriangleNum) to determine the normal vector at each point of the road. The map that best demonstrates this extension is test2Road.json, which has been included.       
